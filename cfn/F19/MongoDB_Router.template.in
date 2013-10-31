@@ -1,0 +1,340 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09", 
+	"Description": "MonboDB Router", 
+	"Mappings": {
+		"AWSInstanceType2Arch": {
+			"m1.large": {
+				"Arch": "64"
+			}, 
+			"m1.medium": {
+				"Arch": "64"
+			}, 
+			"m1.small": {
+				"Arch": "64"
+			}, 
+			"m1.tiny": {
+				"Arch": "64"
+			}, 
+			"m1.xlarge": {
+				"Arch": "64"
+			}
+		}, 
+		"DistroArch2AMI": {
+			"F17": {
+				"32": "F17-i386-cfntools", 
+				"64": "F17-x86_64-cfntools"
+			}, 
+			"F18": {
+				"32": "F18-i386-cfntools", 
+				"64": "F18-x86_64-cfntools"
+			}, 
+			"RHEL-6.1": {
+				"32": "rhel61-i386-cfntools", 
+				"64": "rhel61-x86_64-cfntools"
+			}, 
+			"RHEL-6.2": {
+				"32": "rhel62-i386-cfntools", 
+				"64": "rhel62-x86_64-cfntools"
+			}, 
+			"RHEL-6.3": {
+				"32": "rhel63-i386-cfntools", 
+				"64": "rhel63-x86_64-cfntools"
+			}, 
+			"SL6": {
+				"32": "NOT IMPLEMENTED", 
+				"64": "SL-6.4-x86_64-cfntools"
+			}, 
+			"U10": {
+				"32": "U10-i386-cfntools", 
+				"64": "U10-x86_64-cfntools"
+			}
+		}
+	}, 
+	"Outputs": {
+		"RouterName": {
+			"Description": "public DNS name of the MongoDB Router Instance", 
+			"Value": {
+				"Fn::Select": [
+					"ip_address", 
+					{
+						"Fn::Select": [
+							"0", 
+							{
+								"Fn::GetAtt": [
+									"BackendInterface", 
+									"fixed_ips"
+								]
+							}
+						]
+					}
+				]
+			}
+		}
+	}, 
+	"Parameters": {
+		"PrimaryNetworkId": {
+			"Default": "@PrimaryNetworkId@", 
+			"Description": "PrimaryNetworkId", 
+			"Type": "String"
+		}, 
+		"BackendNetworkId": {
+			"Default": "@BackendNetworkId@", 
+			"Description": "BackendNetworkId", 
+			"Type": "String"
+		}, 
+		"ConfigSvr1": {
+			"Description": "First Mongodb config server", 
+			"Default": "@CONFIGSVR1@",
+			"Type": "String"
+		}, 
+		"ConfigSvr2": {
+			"Description": "Second Mongodb config server", 
+			"Default": "@CONFIGSVR2@",
+			"Type": "String"
+		}, 
+		"ConfigSvr3": {
+			"Description": "Third Mongodb config server", 
+			"Default": "@CONFIGSVR3@",
+			"Type": "String"
+		}, 
+		"MongoDBYumRepo": {
+			"Description": "Mongo DB Yum Repo", 
+			"Default": "@MongoDBYumRepo@",
+			"Type": "String"
+		}, 
+		"ExtraUserData": {
+			"Default": "", 
+			"Description": "Extra UserData script", 
+			"Type": "String"
+		}, 
+		"InstanceType": {
+			"AllowedValues": [
+				"m1.tiny", 
+				"m1.small", 
+				"m1.large", 
+				"m1.xlarge", 
+				"m2.xlarge", 
+				"m2.2xlarge", 
+				"m2.4xlarge", 
+				"c1.xlarge", 
+				"cc1.4xlarge"
+			], 
+			"Default": "m1.tiny", 
+			"Description": "EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)", 
+			"Type": "String"
+		}, 
+		"InstanceZone": {
+			"Description": "AvailabilityZone for this instance", 
+			"Default": "nova",
+			"Type": "String"
+		}, 
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access", 
+			"Default": "@KEYNAME@",
+			"Type": "String"
+		}, 
+		"LinuxDistribution": {
+			"AllowedValues": [
+				"SL6", 
+				"F18", 
+				"F17", 
+				"U10", 
+				"RHEL-6.1", 
+				"RHEL-6.2", 
+				"RHEL-6.3"
+			], 
+			"Default": "SL6", 
+			"Description": "Distribution of choice", 
+			"Type": "String"
+		}, 
+		"PrimarySecurityGroup": {
+			"Description": "Primary MongoDB security group name", 
+			"Default": "@PrimaryRouterSecurityGroup@",
+			"Type": "String"
+		}, 
+		"BackendSecurityGroup": {
+			"Description": "Backend MongoDB security group name", 
+			"Default": "@BackendRouterSecurityGroup@",
+			"Type": "String"
+		}, 
+		"StartupTimeout": {
+			"Default": "600", 
+			"Description": "How long to wait on node coming up", 
+			"Type": "Number"
+		}
+	}, 
+	"Resources": {
+		"BackendInterface": {
+			"Properties": {
+				"network_id": {
+					"Ref": "BackendNetworkId"
+				},
+				"security_groups": [ { "Ref": "BackendSecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"PrimaryInterface": {
+			"Properties": {
+				"network_id": {
+					"Ref": "PrimaryNetworkId"
+				},
+				"security_groups": [ { "Ref": "PrimarySecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"Router": {
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"config": {
+						"files": {
+							"/etc/yum.repos.d/10gen.repo": {
+								"content": {
+									"Fn::Join": [
+										"", 
+										[
+											"[10gen]\n", 
+											"name=10gen Repository\n", 
+											"baseurl=",
+											{ "Ref": "MongoDBYumRepo" },
+											"\ngpgcheck=0\n"
+										]
+									]
+								}, 
+								"group": "root", 
+								"mode": "000644", 
+								"owner": "root"
+							}
+						}, 
+						"packages": {
+							"yum": {
+								"mdadm": [], 
+								"sysstat": []
+							}
+						}
+					}
+				}
+			}, 
+			"Properties": {
+				"AvailabilityZone": {
+					"Ref": "InstanceZone"
+				}, 
+				"ImageId": {
+					"Fn::FindInMap": [
+						"DistroArch2AMI", 
+						{
+							"Ref": "LinuxDistribution"
+						}, 
+						{
+							"Fn::FindInMap": [
+								"AWSInstanceType2Arch", 
+								{
+									"Ref": "InstanceType"
+								}, 
+								"Arch"
+							]
+						}
+					]
+				}, 
+				"InstanceType": {
+					"Ref": "InstanceType"
+				}, 
+				"KeyName": {
+					"Ref": "KeyName"
+				}, 
+				"NetworkInterfaces": [
+					{
+						"DeviceIndex": "0", 
+						"NetworkInterfaceId": {
+							"Ref": "PrimaryInterface"
+						}
+					}, 
+					{
+						"DeviceIndex": "1", 
+						"NetworkInterfaceId": {
+							"Ref": "BackendInterface"
+						}
+					}
+				], 
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"", 
+							[
+								"#!/bin/bash\n", 
+								"yum update -y aws-cfn-bootstrap\n", 
+								"## Error reporting helper function\n", 
+								"function error_exit\n", 
+								"{\n", 
+								"   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", 
+								{
+									"Ref": "WaitHandleRouter"
+								}, 
+								"'\n", 
+								"   exit 1\n", 
+								"}\n", 
+								"## Initialize CloudFormation bits\n", 
+								"/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n", 
+								"yum -y install mongo-10gen-server > /tmp/yum-mongo.log 2>&1\n", 
+								"cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"ifup eth1\n", 
+								"## Update mongod configuration\n", 
+								"cat <<EOF > /etc/mongod.conf\n", 
+								"logpath=/log/mongod.log\n", 
+								"logappend=true\n", 
+								"fork=true\n", 
+								"dbpath=/data\n", 
+								"rest=true\n", 
+								"configsvr=true\n", 
+								"EOF\n", 
+								"## Start mongod\n", 
+								"/usr/bin/mongos --configdb ", 
+								{
+									"Ref": "ConfigSvr1"
+								}, 
+								":27019,", 
+								{
+									"Ref": "ConfigSvr2"
+								}, 
+								":27019,", 
+								{
+									"Ref": "ConfigSvr3"
+								}, 
+								":27019 >/var/log/mongos.log 2>&1 &\n", 
+								"## Extra userdata\n", 
+								{
+									"Ref": "ExtraUserData"
+								}, 
+								"\n", 
+								"## CloudFormation signal that setup is complete\n", 
+								"/opt/aws/bin/cfn-signal -e 0 -r \"Router setup complete\" '", 
+								{
+									"Ref": "WaitHandleRouter"
+								}, 
+								"'\n"
+							]
+						]
+					}
+				}
+			}, 
+			"Type": "AWS::EC2::Instance"
+		}, 
+		"WaitConditionRouter": {
+			"DependsOn": "Router", 
+			"Properties": {
+				"Handle": {
+					"Ref": "WaitHandleRouter"
+				}, 
+				"Timeout": {
+					"Ref": "StartupTimeout"
+				}
+			}, 
+			"Type": "AWS::CloudFormation::WaitCondition"
+		}, 
+		"WaitHandleRouter": {
+			"Properties": {}, 
+			"Type": "AWS::CloudFormation::WaitConditionHandle"
+		}
+	}
+}

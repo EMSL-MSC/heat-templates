@@ -1,0 +1,214 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09", 
+	"Description": "MonboDB Sharded Replica set", 
+	"Outputs": {
+		"ReplicaSetMemberName1": {
+			"Description": "public DNS name of the MongoDB replica set member 1", 
+			"Value": {
+				"Fn::GetAtt": [
+					"ReplicaSet", 
+					"Outputs.ReplicaSetMemberName1"
+				]
+			}
+		}, 
+		"ReplicaSetMemberName2": {
+			"Description": "public DNS name of the MongoDB replica set member 2", 
+			"Value": {
+				"Fn::GetAtt": [
+					"ReplicaSet", 
+					"Outputs.ReplicaSetMemberName2"
+				]
+			}
+		}
+	}, 
+	"Parameters": {
+		"MongoDBYumRepo": {
+			"Description": "Mongo DB Yum Repo", 
+			"Default": "@MongoDBYumRepo@",
+			"Type": "String"
+		"PrimaryNetworkId": {
+			"Default": "@PrimaryNetworkId@", 
+			"Description": "PrimaryNetworkId", 
+			"Type": "String"
+		}, 
+		"BackendNetworkId": {
+			"Default": "@BackendNetworkId@", 
+			"Description": "BackendNetworkId", 
+			"Type": "String"
+		}, 
+		"BackendSubnetId": {
+			"Default": "@BackendSubnetId@", 
+			"Description": "BackendSubnetId", 
+			"Type": "String"
+		}, 
+		"InstanceType": {
+			"AllowedValues": [
+				"m1.tiny", 
+				"m1.small", 
+				"m1.large", 
+				"m1.xlarge", 
+				"m2.xlarge", 
+				"m2.2xlarge", 
+				"m2.4xlarge", 
+				"c1.xlarge", 
+				"cc1.4xlarge"
+			], 
+			"Default": "m1.large", 
+			"Description": "EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)", 
+			"Type": "String"
+		}, 
+		"InstanceZone": {
+			"Description": "AvailabilityZone for this instance",
+			"Default": "nova",
+			"Type": "String"
+		}, 
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access", 
+			"Default": "@KEYNAME@",
+			"Type": "String"
+		}, 
+		"LinuxDistribution": {
+			"AllowedValues": [
+				"SL6", 
+				"F18", 
+				"F17", 
+				"U10", 
+				"RHEL-6.1", 
+				"RHEL-6.2", 
+				"RHEL-6.3"
+			], 
+			"Default": "SL6", 
+			"Description": "Distribution of choice", 
+			"Type": "String"
+		}, 
+		"ReplicaSetName": {
+			"Description": "Name of the MongoDB replica set", 
+			"Type": "String"
+		}, 
+		"PrimarySecurityGroup": {
+			"Description": "Primary MongoDB security group name", 
+			"Default": "@PrimaryReplicaSetSecurityGroup@",
+			"Type": "String"
+		}, 
+		"BackendSecurityGroup": {
+			"Description": "Backend MongoDB security group name", 
+			"Default": "@BackendReplicaSetSecurityGroup@",
+			"Type": "String"
+		}, 
+		"VolumeSize": {
+			"Default": "40", 
+			"Description": "Volume size for each EBS volume", 
+			"Type": "Number"
+		},
+		"TemplateBaseUrl": {
+			"Default": "@TemplateBaseUrl@",
+			"Description": "URL for templates", 
+			"Type": "String"
+		}, 
+		"ConfigSvr1": {
+			"Description": "First Mongodb config server", 
+			"Default": "@CONFIGSVR1@",
+			"Type": "String"
+		}, 
+		"ConfigSvr2": {
+			"Description": "Second Mongodb config server", 
+			"Default": "@CONFIGSVR2@",
+			"Type": "String"
+		}, 
+		"ConfigSvr3": {
+			"Description": "Third Mongodb config server", 
+			"Default": "@CONFIGSVR3@",
+			"Type": "String"
+		}
+	}, 
+	"Resources": {
+		"ReplicaSet": {
+			"Properties": {
+				"Parameters": {
+					"BackendNetworkId": {
+						"Ref": "BackendNetworkId"
+					}, 
+					"BackendSubnetId": {
+						"Ref": "BackendSubnetId"
+					}, 
+					"InstanceType": {
+						"Ref": "InstanceType"
+					}, 
+					"InstanceZone": {
+						"Ref": "InstanceZone"
+					}, 
+					"KeyName": {
+						"Ref": "KeyName"
+					}, 
+					"PrimaryNetworkId": {
+						"Ref": "PrimaryNetworkId"
+					}, 
+					"ReplicaSetName": {
+						"Ref": "ReplicaSetName"
+					}, 
+					"PrimarySecurityGroup": {
+						"Ref": "PrimarySecurityGroup"
+					}, 
+					"BackendSecurityGroup": {
+						"Ref": "BackendSecurityGroup"
+					}, 
+					"VolumeSize": {
+						"Ref": "VolumeSize"
+					},
+					"TemplateBaseUrl": {
+						"Ref": "TemplateBaseUrl"
+					},
+					"ReplicaSet1ExtraUserData": {
+						"Fn::Join": [
+							"", 
+							[
+								"/usr/bin/mongos --configdb ", 
+								{
+									"Ref": "ConfigSvr1"
+								}, 
+								":27019,", 
+								{
+									"Ref": "ConfigSvr2"
+								}, 
+								":27019,", 
+								{
+									"Ref": "ConfigSvr3"
+								}, 
+								":27019 --port 13370 >/var/log/mongos.log 2>&1 &\n", 
+								"## Create replica set configuration\n", 
+								"## The following is only needed on the PRIMARY\n", 
+								"cat <<EOF > /tmp/shardInit.js\n", 
+								"sh.addShard(\"", 
+								{
+									"Ref": "ReplicaSetName"
+								}, 
+								"/$HOSTNAME", 
+								":27017\");\n", 
+								"EOF\n",
+								"false\n",
+								"while [ $? -ne 0 ]; do \n",
+								"sleep 10\n", 
+								"mongo --eval 'var s = rs.status().myState; if (s == 1 || s == 2) {print(\"READY\", s); quit(0)}; quit(1)'\n",
+								"done\n",
+								"sleep 20\n", 
+								"/usr/bin/mongo --port 13370 /tmp/shardInit.js > /tmp/shard-setup.log 2>&1\n",
+								"sleep 20\n", 
+								"killall mongos\n"
+							]
+						]
+					}
+				}, 
+				"TemplateURL": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "TemplateBaseUrl" },
+							"/MongoDB_ReplicaSet.template"
+						]
+					]
+				}
+			}, 
+			"Type": "AWS::CloudFormation::Stack"
+		}
+	}
+}
