@@ -1,0 +1,381 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09", 
+	"Description": "ElasticSearch Router", 
+	"Mappings": {
+		"AWSInstanceType2Arch": {
+			"m1.large": {
+				"Arch": "64"
+			}, 
+			"m1.medium": {
+				"Arch": "64"
+			}, 
+			"m1.small": {
+				"Arch": "64"
+			}, 
+			"m1.tiny": {
+				"Arch": "32"
+			}, 
+			"m1.xlarge": {
+				"Arch": "64"
+			}
+		}, 
+		"DistroArch2AMI": {
+			"F17": {
+				"32": "F17-i386-cfntools", 
+				"64": "F17-x86_64-cfntools"
+			}, 
+			"F18": {
+				"32": "F18-i386-cfntools", 
+				"64": "F18-x86_64-cfntools"
+			}, 
+			"RHEL-6.1": {
+				"32": "rhel61-i386-cfntools", 
+				"64": "rhel61-x86_64-cfntools"
+			}, 
+			"RHEL-6.2": {
+				"32": "rhel62-i386-cfntools", 
+				"64": "rhel62-x86_64-cfntools"
+			}, 
+			"RHEL-6.3": {
+				"32": "rhel63-i386-cfntools", 
+				"64": "rhel63-x86_64-cfntools"
+			}, 
+			"SL6": {
+				"32": "NOT IMPLEMENTED", 
+				"64": "SL-6.4-x86_64-cfntools"
+			}, 
+			"U10": {
+				"32": "U10-i386-cfntools", 
+				"64": "U10-x86_64-cfntools"
+			}
+		}
+	}, 
+	"Outputs": {
+		"MemberName": {
+			"Description": "public DNS name of the ElasticSearch data node Instance", 
+			"Value": {
+				"Fn::Select": [
+					"ip_address", 
+					{
+						"Fn::Select": [
+							"0", 
+							{
+								"Fn::GetAtt": [
+									"BackendInterface", 
+									"fixed_ips"
+								]
+							}
+						]
+					}
+				]
+			}
+		}
+	}, 
+	"Parameters": {
+		"ClusterName": {
+			"Default": "@ClusterName@", 
+			"Description": "Cluster Name", 
+			"Type": "String"
+		}, 
+		"RouterName": {
+			"Description": "Router Name", 
+			"Type": "String"
+		}, 
+		"PrimaryNetworkId": {
+			"Default": "@PrimaryNetworkId@", 
+			"Description": "PrimaryNetworkId", 
+			"Type": "String"
+		}, 
+		"BackendNetworkId": {
+			"Default": "@BackendNetworkId@", 
+			"Description": "BackendNetworkId", 
+			"Type": "String"
+		}, 
+		"MasterSvr1": {
+			"Description": "First ElasticSearch master server", 
+			"Default": "@MASTERSVR1@",
+			"Type": "String"
+		}, 
+		"MasterSvr2": {
+			"Description": "Second ElasticSearch master server", 
+			"Default": "@MASTERSVR2@",
+			"Type": "String"
+		}, 
+		"MasterSvr3": {
+			"Description": "Third ElasticSearch master server", 
+			"Default": "@MASTERSVR3@",
+			"Type": "String"
+		}, 
+		"ElasticSearchVersion": {
+			"Description": "ElasticSearch Version", 
+			"Default": "@ElasticSearchVersion@",
+			"Type": "String"
+		},
+		"ElasticSearchBaseURL": {
+			"Description": "ElasticSearch Base URL", 
+			"Default": "@ElasticSearchBaseURL@",
+			"Type": "String"
+		},
+		"ExtraUserData": {
+			"Default": "", 
+			"Description": "Extra UserData script", 
+			"Type": "String"
+		}, 
+		"InstanceType": {
+			"AllowedValues": [
+				"m1.small", 
+				"m1.large", 
+				"m1.xlarge", 
+				"m2.xlarge", 
+				"m2.2xlarge", 
+				"m2.4xlarge", 
+				"c1.xlarge", 
+				"cc1.4xlarge"
+			], 
+			"Default": "m1.small", 
+			"Description": "EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)", 
+			"Type": "String"
+		}, 
+		"InstanceZone": {
+			"Default": "@InstanceZone@",
+			"Description": "AvailabilityZone for this instance", 
+			"Type": "String"
+		}, 
+		"KeyName": {
+			"Default": "@KEYNAME@",
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access", 
+			"Type": "String"
+		}, 
+		"LinuxDistribution": {
+			"AllowedValues": [
+				"SL6", 
+				"F18", 
+				"F17", 
+				"U10", 
+				"RHEL-6.1", 
+				"RHEL-6.2", 
+				"RHEL-6.3"
+			], 
+			"Default": "SL6", 
+			"Description": "Distribution of choice", 
+			"Type": "String"
+		}, 
+		"PrimarySecurityGroup": {
+			"Default": "@PrimarySecurityGroup@",
+			"Description": "Primary ElasticSearch security group name", 
+			"Type": "String"
+		}, 
+		"BackendSecurityGroup": {
+			"Default": "@BackendSecurityGroup@",
+			"Description": "Backend ElasticSearch security group name", 
+			"Type": "String"
+		}, 
+		"StartupTimeout": {
+			"Default": "600", 
+			"Description": "How long to wait on node coming up", 
+			"Type": "Number"
+		}
+	}, 
+	"Resources": {
+		"BackendInterface": {
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "RouterName" },
+							"-BackendPort"
+						]
+					]
+				},
+				"network_id": {
+					"Ref": "BackendNetworkId"
+				},
+				"security_groups": [ { "Ref": "BackendSecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"PrimaryInterface": {
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "RouterName" },
+							"-PrimaryPort"
+						]
+					]
+				},
+				"network_id": {
+					"Ref": "PrimaryNetworkId"
+				},
+				"security_groups": [ { "Ref": "PrimarySecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"RouterInstance": {
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"config": {
+						"packages": {
+							"yum": {
+								"mdadm": [], 
+								"sysstat": []
+							}
+						}
+					}
+				}
+			}, 
+			"Properties": {
+				"availability_zone": {
+					"Ref": "InstanceZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "RouterName" }
+						]
+					]
+				},
+				"image": {
+					"Fn::FindInMap": [
+						"DistroArch2AMI", 
+						{
+							"Ref": "LinuxDistribution"
+						}, 
+						{
+							"Fn::FindInMap": [
+								"AWSInstanceType2Arch", 
+								{
+									"Ref": "InstanceType"
+								}, 
+								"Arch"
+							]
+						}
+					]
+				}, 
+				"flavor": {
+					"Ref": "InstanceType"
+				}, 
+				"key_name": {
+					"Ref": "KeyName"
+				}, 
+				"networks": [
+					{
+						"port": {
+							"Ref": "PrimaryInterface"
+						}
+					}, 
+					{
+						"port": {
+							"Ref": "BackendInterface"
+						}
+					}
+				], 
+				"user_data": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"", 
+							[
+								"#!/bin/bash\n", 
+								"cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"ifup eth1\n", 
+								"yum update -y aws-cfn-bootstrap\n", 
+								"yum install -y java-1.6.0-openjdk\n", 
+								"## Error reporting helper function\n", 
+								"function error_exit\n", 
+								"{\n", 
+								"   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", 
+								{
+									"Ref": "WaitHandleRouter"
+								}, 
+								"'\n", 
+								"   exit 1\n", 
+								"}\n", 
+								"## Initialize CloudFormation bits\n", 
+								"/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n", 
+								"rpm -Uvh ",
+								{
+									"Fn::Join": [
+										"", 
+										[
+											{ "Ref": "ElasticSearchBaseURL" }, 
+											"/elasticsearch-",
+											{ "Ref": "ElasticSearchVersion" }, 
+											".noarch.rpm"
+										]
+									]
+								},
+								" > /tmp/yum-elasticsearch.log 2>&1\n", 
+								"killall java\n", 
+								"MYBACKENDIP=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`\n",
+								"## Update elasticsearch configuration\n", 
+								"cat <<EOF > /etc/elasticsearch/elasticsearch.yml\n", 
+								"network.host: $MYBACKENDIP\n",
+								"node.master: false\n",
+								"node.data: false\n",
+								"discovery.zen.minimum_master_nodes: 2\n",
+								"discovery.zen.ping.multicast.enabled: false\n",
+								"discovery.zen.ping.unicast.hosts: [",
+								{
+									"Fn::Join": [
+										"", 
+										[
+											"\"",
+											{ "Ref": "MasterSvr1" },
+											":9300\", \"",
+											{ "Ref": "MasterSvr2" },
+											":9300\", \"",
+											{ "Ref": "MasterSvr3" }
+										]
+									]
+								},
+								":9300\"]\n",
+								"EOF\n", 
+								"## Start elasticsearch\n", 
+								"/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1\n", 
+								"## Extra userdata\n", 
+								{
+									"Ref": "ExtraUserData"
+								}, 
+								"\n", 
+								"## CloudFormation signal that setup is complete\n", 
+								"/opt/aws/bin/cfn-signal -e 0 -r \"RouterInstance setup complete\" '", 
+								{
+									"Ref": "WaitHandleRouter"
+								}, 
+								"'\n"
+							]
+						]
+					}
+				}
+			}, 
+			"Type": "OS::Nova::Server"
+		}, 
+		"WaitConditionRouter": {
+			"DependsOn": "RouterInstance", 
+			"Properties": {
+				"Handle": {
+					"Ref": "WaitHandleRouter"
+				}, 
+				"Timeout": {
+					"Ref": "StartupTimeout"
+				}
+			}, 
+			"Type": "AWS::CloudFormation::WaitCondition"
+		}, 
+		"WaitHandleRouter": {
+			"Properties": {}, 
+			"Type": "AWS::CloudFormation::WaitConditionHandle"
+		}
+	}
+}

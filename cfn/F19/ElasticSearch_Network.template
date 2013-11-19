@@ -1,0 +1,100 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09", 
+	"Outputs": {
+		"NetworkId": {
+			"Description": "Network ID", 
+			"Value": {
+				"Ref": "network"
+			}
+		}, 
+		"SubnetId": {
+			"Description": "Subnet ID", 
+			"Value": {
+				"Ref": "subnet"
+			}
+		}
+	}, 
+	"Parameters": {
+		"IpPrefix": {
+			"Default": "10.0.102", 
+			"Description": "Ip Prefix to use", 
+			"Type": "String"
+		},
+		"ClusterName": {
+			"Description": "Cluster Name", 
+			"Type": "String"
+		}
+	}, 
+	"Resources": {
+		"network": {
+			"Type": "OS::Neutron::Net",
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"", 
+						[
+							{ "Ref" : "ClusterName" },
+							"-BackendNetwork"
+						]
+					]
+				}
+			}
+		}, 
+		"subnet": {
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"", 
+						[
+							{ "Ref" : "ClusterName" },
+							"-BackendSubnet"
+						]
+					]
+				},
+				"allocation_pools": [
+					{
+						"end": {
+							"Fn::Join": [
+								"", 
+								[
+									{
+										"Ref": "IpPrefix"
+									}, 
+									".240"
+								]
+							]
+						}, 
+						"start": {
+							"Fn::Join": [
+								"", 
+								[
+									{
+										"Ref": "IpPrefix"
+									}, 
+									".10"
+								]
+							]
+						}
+					}
+				], 
+				"cidr": {
+					"Fn::Join": [
+						"", 
+						[
+							{
+								"Ref": "IpPrefix"
+							}, 
+							".0/24"
+						]
+					]
+				}, 
+				"gateway_ip": "", 
+				"ip_version": 4, 
+				"network_id": {
+					"Ref": "network"
+				}
+			}, 
+			"Type": "OS::Neutron::Subnet"
+		}
+	}
+}

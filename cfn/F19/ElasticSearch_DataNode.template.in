@@ -1,0 +1,563 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09", 
+	"Description": "ElasticSearch Data Node", 
+	"Mappings": {
+		"AWSInstanceType2Arch": {
+			"m1.large": {
+				"Arch": "64"
+			}, 
+			"m1.medium": {
+				"Arch": "64"
+			}, 
+			"m1.small": {
+				"Arch": "64"
+			}, 
+			"m1.tiny": {
+				"Arch": "32"
+			}, 
+			"m1.xlarge": {
+				"Arch": "64"
+			}
+		}, 
+		"DistroArch2AMI": {
+			"F17": {
+				"32": "F17-i386-cfntools", 
+				"64": "F17-x86_64-cfntools"
+			}, 
+			"F18": {
+				"32": "F18-i386-cfntools", 
+				"64": "F18-x86_64-cfntools"
+			}, 
+			"RHEL-6.1": {
+				"32": "rhel61-i386-cfntools", 
+				"64": "rhel61-x86_64-cfntools"
+			}, 
+			"RHEL-6.2": {
+				"32": "rhel62-i386-cfntools", 
+				"64": "rhel62-x86_64-cfntools"
+			}, 
+			"RHEL-6.3": {
+				"32": "rhel63-i386-cfntools", 
+				"64": "rhel63-x86_64-cfntools"
+			}, 
+			"SL6": {
+				"32": "NOT IMPLEMENTED", 
+				"64": "SL-6.4-x86_64-cfntools"
+			}, 
+			"U10": {
+				"32": "U10-i386-cfntools", 
+				"64": "U10-x86_64-cfntools"
+			}
+		}
+	}, 
+	"Outputs": {
+		"MemberName": {
+			"Description": "public DNS name of the ElasticSearch data node Instance", 
+			"Value": {
+				"Fn::Select": [
+					"ip_address", 
+					{
+						"Fn::Select": [
+							"0", 
+							{
+								"Fn::GetAtt": [
+									"BackendInterface", 
+									"fixed_ips"
+								]
+							}
+						]
+					}
+				]
+			}
+		}
+	}, 
+	"Parameters": {
+		"ClusterName": {
+			"Default": "@ClusterName@", 
+			"Description": "Cluster Name", 
+			"Type": "String"
+		}, 
+		"DataNodeName": {
+			"Description": "Data Node Name", 
+			"Type": "String"
+		}, 
+		"PrimaryNetworkId": {
+			"Default": "@PrimaryNetworkId@", 
+			"Description": "PrimaryNetworkId", 
+			"Type": "String"
+		}, 
+		"BackendNetworkId": {
+			"Default": "@BackendNetworkId@", 
+			"Description": "BackendNetworkId", 
+			"Type": "String"
+		}, 
+		"MasterSvr1": {
+			"Description": "First ElasticSearch master server", 
+			"Default": "@MASTERSVR1@",
+			"Type": "String"
+		}, 
+		"MasterSvr2": {
+			"Description": "Second ElasticSearch master server", 
+			"Default": "@MASTERSVR2@",
+			"Type": "String"
+		}, 
+		"MasterSvr3": {
+			"Description": "Third ElasticSearch master server", 
+			"Default": "@MASTERSVR3@",
+			"Type": "String"
+		}, 
+		"ElasticSearchVersion": {
+			"Description": "ElasticSearch Version", 
+			"Default": "@ElasticSearchVersion@",
+			"Type": "String"
+		},
+		"ElasticSearchBaseURL": {
+			"Description": "ElasticSearch Base URL", 
+			"Default": "@ElasticSearchBaseURL@",
+			"Type": "String"
+		},
+		"ExtraUserData": {
+			"Default": "", 
+			"Description": "Extra UserData script", 
+			"Type": "String"
+		}, 
+		"InstanceType": {
+			"AllowedValues": [
+				"m1.small", 
+				"m1.large", 
+				"m1.xlarge", 
+				"m2.xlarge", 
+				"m2.2xlarge", 
+				"m2.4xlarge", 
+				"c1.xlarge", 
+				"cc1.4xlarge"
+			], 
+			"Default": "m1.large", 
+			"Description": "EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)", 
+			"Type": "String"
+		}, 
+		"AvailabilityZone": {
+			"Default": "@InstanceZone@",
+			"Description": "AvailabilityZone for this instance", 
+			"Type": "String"
+		}, 
+		"KeyName": {
+			"Default": "@KEYNAME@",
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access", 
+			"Type": "String"
+		}, 
+		"LinuxDistribution": {
+			"AllowedValues": [
+				"SL6", 
+				"F18", 
+				"F17", 
+				"U10", 
+				"RHEL-6.1", 
+				"RHEL-6.2", 
+				"RHEL-6.3"
+			], 
+			"Default": "SL6", 
+			"Description": "Distribution of choice", 
+			"Type": "String"
+		}, 
+		"PrimarySecurityGroup": {
+			"Default": "@PrimarySecurityGroup@",
+			"Description": "Primary ElasticSearch security group name", 
+			"Type": "String"
+		}, 
+		"BackendSecurityGroup": {
+			"Default": "@BackendSecurityGroup@",
+			"Description": "Backend ElasticSearch security group name", 
+			"Type": "String"
+		}, 
+		"StartupTimeout": {
+			"Default": "600", 
+			"Description": "How long to wait on node coming up", 
+			"Type": "Number"
+		}, 
+		"VolumeSize": {
+			"Default": "40", 
+			"Description": "Volume size for each EBS volume", 
+			"Type": "Number"
+		}
+	}, 
+	"Resources": {
+		"BackendInterface": {
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-BackendPort"
+						]
+					]
+				},
+				"network_id": {
+					"Ref": "BackendNetworkId"
+				},
+				"security_groups": [ { "Ref": "BackendSecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"ElasticSearchVolume1": {
+			"Properties": {
+				"availability_zone": {
+					"Ref": "AvailabilityZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-Volume1"
+						]
+					]
+				},
+				"size": {
+					"Ref": "VolumeSize"
+				}
+			}, 
+			"Type": "OS::Cinder::Volume"
+		}, 
+		"ElasticSearchVolume2": {
+			"Properties": {
+				"availability_zone": {
+					"Ref": "AvailabilityZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-Volume2"
+						]
+					]
+				},
+				"size": {
+					"Ref": "VolumeSize"
+				}
+			}, 
+			"Type": "OS::Cinder::Volume"
+		}, 
+		"ElasticSearchVolume3": {
+			"Properties": {
+				"availability_zone": {
+					"Ref": "AvailabilityZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-Volume3"
+						]
+					]
+				},
+				"size": {
+					"Ref": "VolumeSize"
+				}
+			}, 
+			"Type": "OS::Cinder::Volume"
+		}, 
+		"ElasticSearchVolume4": {
+			"Properties": {
+				"availability_zone": {
+					"Ref": "AvailabilityZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-Volume4"
+						]
+					]
+				},
+				"size": {
+					"Ref": "VolumeSize"
+				}
+			}, 
+			"Type": "OS::Cinder::Volume"
+		}, 
+		"ElasticSearchVolumeMount1": {
+			"Properties": {
+				"Device": "/dev/vdb", 
+				"InstanceId": {
+					"Ref": "DataNodeInstance"
+				}, 
+				"VolumeId": {
+					"Ref": "ElasticSearchVolume1"
+				}
+			}, 
+			"Type": "AWS::EC2::VolumeAttachment"
+		}, 
+		"ElasticSearchVolumeMount2": {
+			"Properties": {
+				"Device": "/dev/vdc", 
+				"InstanceId": {
+					"Ref": "DataNodeInstance"
+				}, 
+				"VolumeId": {
+					"Ref": "ElasticSearchVolume2"
+				}
+			}, 
+			"Type": "AWS::EC2::VolumeAttachment"
+		}, 
+		"ElasticSearchVolumeMount3": {
+			"Properties": {
+				"Device": "/dev/vdd", 
+				"InstanceId": {
+					"Ref": "DataNodeInstance"
+				}, 
+				"VolumeId": {
+					"Ref": "ElasticSearchVolume3"
+				}
+			}, 
+			"Type": "AWS::EC2::VolumeAttachment"
+		}, 
+		"ElasticSearchVolumeMount4": {
+			"Properties": {
+				"Device": "/dev/vde", 
+				"InstanceId": {
+					"Ref": "DataNodeInstance"
+				}, 
+				"VolumeId": {
+					"Ref": "ElasticSearchVolume4"
+				}
+			}, 
+			"Type": "AWS::EC2::VolumeAttachment"
+		}, 
+		"PrimaryInterface": {
+			"Properties": {
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" },
+							"-PrimaryPort"
+						]
+					]
+				},
+				"network_id": {
+					"Ref": "PrimaryNetworkId"
+				},
+				"security_groups": [ { "Ref": "PrimarySecurityGroup" } ]
+			}, 
+			"Type": "OS::Neutron::Port"
+		}, 
+		"DataNodeInstance": {
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"config": {
+						"packages": {
+							"yum": {
+								"mdadm": [], 
+								"sysstat": []
+							}
+						}
+					}
+				}
+			}, 
+			"Properties": {
+				"availability_zone": {
+					"Ref": "AvailabilityZone"
+				}, 
+				"name": {
+					"Fn::Join": [
+						"",
+						[
+							{ "Ref": "ClusterName" },
+							"-",
+							{ "Ref": "DataNodeName" }
+						]
+					]
+				},
+				"image": {
+					"Fn::FindInMap": [
+						"DistroArch2AMI", 
+						{
+							"Ref": "LinuxDistribution"
+						}, 
+						{
+							"Fn::FindInMap": [
+								"AWSInstanceType2Arch", 
+								{
+									"Ref": "InstanceType"
+								}, 
+								"Arch"
+							]
+						}
+					]
+				}, 
+				"flavor": {
+					"Ref": "InstanceType"
+				}, 
+				"key_name": {
+					"Ref": "KeyName"
+				}, 
+				"networks": [
+					{
+						"port": {
+							"Ref": "PrimaryInterface"
+						}
+					}, 
+					{
+						"port": {
+							"Ref": "BackendInterface"
+						}
+					}
+				], 
+				"user_data": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"", 
+							[
+								"#!/bin/bash\n", 
+								"cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n", 
+								"ifup eth1\n",
+								"yum update -y aws-cfn-bootstrap\n", 
+								"yum install -y java-1.6.0-openjdk\n", 
+								"## Error reporting helper function\n", 
+								"function error_exit\n", 
+								"{\n", 
+								"   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '", 
+								{
+									"Ref": "WaitHandleDataNode"
+								}, 
+								"'\n", 
+								"   exit 1\n", 
+								"}\n", 
+								"## Initialize CloudFormation bits\n", 
+								"/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n", 
+								"## Waiting for EBS mounts to become available\n", 
+								"while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n", 
+								"while [ ! -e /dev/vdc ]; do echo waiting for /dev/vdc to attach; sleep 10; done\n", 
+								"while [ ! -e /dev/vdd ]; do echo waiting for /dev/vdd to attach; sleep 10; done\n", 
+								"while [ ! -e /dev/vde ]; do echo waiting for /dev/vde to attach; sleep 10; done\n", 
+								"rpm -Uvh ",
+								{
+									"Fn::Join": [
+										"", 
+										[
+											{ "Ref": "ElasticSearchBaseURL" }, 
+											"/elasticsearch-",
+											{ "Ref": "ElasticSearchVersion" }, 
+											".noarch.rpm"
+										]
+									]
+								},
+								" > /tmp/yum-elasticsearch.log 2>&1\n", 
+								"killall java\n", 
+								"## Create RAID10 and persist configuration\n", 
+								"mdadm --verbose --create /dev/md0 --level=10 --chunk=256 --raid-devices=4 /dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1\n", 
+								"echo '`mdadm --detail --scan`' | tee -a /etc/mdadm.conf\n", 
+								"## Set read-ahead on each device\n", 
+								"blockdev --setra 128 /dev/md0\n", 
+								"blockdev --setra 128 /dev/vdb\n", 
+								"blockdev --setra 128 /dev/vdc\n", 
+								"blockdev --setra 128 /dev/vdd\n", 
+								"blockdev --setra 128 /dev/vde\n", 
+								"## Create physical and logical volumes\n", 
+								"dd if=/dev/zero of=/dev/md0 bs=512 count=1\n", 
+								"pvcreate /dev/md0\n", 
+								"vgcreate vg0 /dev/md0\n", 
+								"lvcreate -l 80%vg -n data vg0\n", 
+								"lvcreate -l 10%vg -n log vg0\n", 
+								"lvcreate -l 10%vg -n journal vg0\n", 
+								"## Create filesystems and mount point info\n", 
+								"mke2fs -t ext4 -F /dev/vg0/data > /tmp/mke2fs1.log 2>&1\n", 
+								"mke2fs -t ext4 -F /dev/vg0/log > /tmp/mke2fs2.log 2>&1\n", 
+								"mke2fs -t ext4 -F /dev/vg0/journal > /tmp/mke2fs3.log 2>&1\n", 
+								"mkdir /data\n", 
+								"mkdir /log\n", 
+								"mkdir /journal\n", 
+								"echo '/dev/vg0/data /data ext4 defaults,auto,noatime,noexec 0 0' | tee -a /etc/fstab\n", 
+								"echo '/dev/vg0/log /log ext4 defaults,auto,noatime,noexec 0 0' | tee -a /etc/fstab\n", 
+								"echo '/dev/vg0/journal /journal ext4 defaults,auto,noatime,noexec 0 0' | tee -a /etc/fstab\n", 
+								"mount /data > /tmp/mount1.log 2>&1\n", 
+								"mount /log > /tmp/mount2.log 2>&1\n", 
+								"mount /journal > /tmp/mount3.log 2>&1\n", 
+								"ln -s /journal /data/journal\n", 
+								"chown -R elasticsearch:elasticsearch /data > /tmp/chown1.log 2>&1\n", 
+								"chown -R elasticsearch:elasticsearch /log > /tmp/chown2.log 2>&1\n", 
+								"chown -R elasticsearch:elasticsearch /journal > /tmp/chown3.log 2>&1\n", 
+								"MYBACKENDIP=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`\n",
+								"## Update elasticsearch configuration\n", 
+								"cat <<EOF > /etc/elasticsearch/elasticsearch.yml\n", 
+								"network.host: $MYBACKENDIP\n",
+								"path.data: /data\n",
+								"path.work: /journal\n",
+								"path.log: /log\n",
+								"node.master: false\n",
+								"node.data: true\n",
+								"discovery.zen.minimum_master_nodes: 2\n",
+								"discovery.zen.ping.multicast.enabled: false\n",
+								"discovery.zen.ping.unicast.hosts: [",
+								{
+									"Fn::Join": [
+										"", 
+										[
+											"\"",
+											{ "Ref": "MasterSvr1" },
+											":9300\", \"",
+											{ "Ref": "MasterSvr2" },
+											":9300\", \"",
+											{ "Ref": "MasterSvr3" }
+										]
+									]
+								},
+								":9300\"]\n",
+								"EOF\n", 
+								"## Start elasticsearch\n", 
+								"/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1\n", 
+								"## Extra userdata\n", 
+								{
+									"Ref": "ExtraUserData"
+								}, 
+								"\n", 
+								"## CloudFormation signal that setup is complete\n", 
+								"/opt/aws/bin/cfn-signal -e 0 -r \"DataNodeInstance setup complete\" '", 
+								{
+									"Ref": "WaitHandleDataNode"
+								}, 
+								"'\n"
+							]
+						]
+					}
+				}
+			}, 
+			"Type": "OS::Nova::Server"
+		}, 
+		"WaitConditionDataNode": {
+			"DependsOn": "DataNodeInstance", 
+			"Properties": {
+				"Handle": {
+					"Ref": "WaitHandleDataNode"
+				}, 
+				"Timeout": {
+					"Ref": "StartupTimeout"
+				}
+			}, 
+			"Type": "AWS::CloudFormation::WaitCondition"
+		}, 
+		"WaitHandleDataNode": {
+			"Properties": {}, 
+			"Type": "AWS::CloudFormation::WaitConditionHandle"
+		}
+	}
+}
