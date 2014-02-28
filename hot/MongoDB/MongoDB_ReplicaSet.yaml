@@ -1,0 +1,157 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: MonboDB replica set
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL-6.4-x86_64-cfntools}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  ReplicaSetMemberName1:
+    Description: public DNS name of the MongoDB replica set member
+      1
+    Value:
+      Fn::GetAtt: [ReplicaSetMember1, Outputs.ReplicaSetMemberName]
+  ReplicaSetMemberName2:
+    Description: public DNS name of the MongoDB replica set member
+      2
+    Value:
+      Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+Parameters:
+  BackendNetworkId: {Description: BackendNetworkId,
+    Type: String}
+  BackendSubnetId: {Description: BackendSubnetId,
+    Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.large
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for
+      this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  MongoDBYumRepo: {Description: Mongo DB Yum Repo,
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId,
+    Type: String}
+  PrimarySecurityGroup: {Description: Primary MongoDB
+      security group name, Type: String}
+  BackendSecurityGroup: {Description: Backend MongoDB
+      security group name, Type: String}
+  TemplateBaseUrl: {Description: URL for templates,
+    Type: String}
+  ReplicaSetName: {Description: Name of the MongoDB
+      replica set, Type: String}
+  VolumeSize: {Default: '40', Description: Volume
+      size for each EBS volume, Type: Number}
+  ReplicaSet1ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+Resources:
+  ReplicaSetMember1:
+    DependsOn: ReplicaSetMember2
+    Properties:
+      Parameters:
+        MongoDBYumRepo: {Ref: MongoDBYumRepo}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        BackendSubnetId: {Ref: BackendSubnetId}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - '## Waiting until mongod has started
+
+'
+            - 'sleep 120
+
+'
+            - '## Create replica set configuration
+
+'
+            - '## The following is only needed on the PRIMARY
+
+'
+            - 'HOSTNAME=`/sbin/ifconfig eth1 | grep ''inet addr:'' | cut -d: -f2 |
+              awk ''{ print $1}''`
+
+'
+            - 'cat <<EOF > /tmp/replicaSetConfigInit.js
+
+'
+            - 'config = {_id: "'
+            - {Ref: ReplicaSetName}
+            - '", members : ['
+            - '{_id : 0, host:"$HOSTNAME:27017"},'
+            - '{_id : 1, host:"'
+            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+            - :27017"}
+            - ']};
+
+'
+            - 'rs.initiate(config);
+
+'
+            - 'EOF
+
+'
+            - '/usr/bin/mongo /tmp/replicaSetConfigInit.js > /tmp/replica-setup.log
+              2>&1
+
+'
+            - {Ref: ReplicaSet1ExtraUserData}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        ReplicaSetName: {Ref: ReplicaSetName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        ReplicaSetName: {Ref: ReplicaSetName}
+        StartupTimeout: 700
+        VolumeSize: {Ref: VolumeSize}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /MongoDB_ReplicaSetMember.template
+    Type: AWS::CloudFormation::Stack
+  ReplicaSetMember2:
+    Properties:
+      Parameters:
+        MongoDBYumRepo: {Ref: MongoDBYumRepo}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        BackendSubnetId: {Ref: BackendSubnetId}
+        ExtraUserData: echo foo; echo bar
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        ReplicaSetName: {Ref: ReplicaSetName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        ReplicaSetName: {Ref: ReplicaSetName}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        VolumeSize: {Ref: VolumeSize}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /MongoDB_ReplicaSetMember.template
+    Type: AWS::CloudFormation::Stack
+

@@ -1,0 +1,375 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: MonboDB Config Server
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL-6.4-x86_64-cfntools}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  ConfigSvrName:
+    Description: public DNS name of the MongoDB Config Server Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [BackendInterface, fixed_ips]
+Parameters:
+  MongoDBYumRepo: {Description: Mongo DB Yum Repo,
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Type: String}
+  PrimarySecurityGroup: {Description: Primary Security
+      Group, Type: String}
+  BackendSecurityGroup: {Description: Backend Security
+      Group, Type: String}
+  BackendIpAddress: {Description: BackendIpAddress,
+    Type: String}
+  BackendNetworkId: {Description: BackendNetworkId,
+    Type: String}
+  BackendSubnetId: {Description: BackendSubnetId,
+    Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for
+      this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId,
+    Type: String}
+  StartupTimeout: {Default: '700', Description: How
+      long to wait on node coming up, Type: Number}
+  VolumeSize: {Default: '2', Description: Volume
+      size for each EBS volume, Type: Number}
+Resources:
+  PrimaryInterface:
+    Properties:
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups:
+      - {Ref: PrimarySecurityGroup}
+    Type: OS::Neutron::Port
+  BackendInterface:
+    Properties:
+      fixed_ips:
+      - ip_address: {Ref: BackendIpAddress}
+        subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
+      security_groups:
+      - {Ref: BackendSecurityGroup}
+    Type: OS::Neutron::Port
+  ConfigServer:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          files:
+            /etc/yum.repos.d/10gen.repo:
+              content:
+                Fn::Join:
+                - ''
+                - - '[10gen]
+
+'
+                  - 'name=10gen Repository
+
+'
+                  - baseurl=
+                  - {Ref: MongoDBYumRepo}
+                  - '
+
+                    gpgcheck=0
+
+'
+              group: root
+              mode: '000644'
+              owner: root
+          packages:
+            yum:
+              mdadm: []
+              sysstat: []
+    Properties:
+      AvailabilityZone: {Ref: InstanceZone}
+      ImageId:
+        Fn::FindInMap:
+        - DistroArch2AMI
+        - {Ref: LinuxDistribution}
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - {Ref: InstanceType}
+          - Arch
+      InstanceType: {Ref: InstanceType}
+      KeyName: {Ref: KeyName}
+      NetworkInterfaces:
+      - DeviceIndex: '0'
+        NetworkInterfaceId: {Ref: PrimaryInterface}
+      - DeviceIndex: '1'
+        NetworkInterfaceId: {Ref: BackendInterface}
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - '#!/bin/bash
+
+'
+            - 'yum update -y aws-cfn-bootstrap
+
+'
+            - '## Error reporting helper function
+
+'
+            - 'function error_exit
+
+'
+            - '{
+
+'
+            - '   /opt/aws/bin/cfn-signal -e 1 -r "$1" '''
+            - {Ref: WaitHandleConfigSvr}
+            - '''
+
+'
+            - '   exit 1
+
+'
+            - '}
+
+'
+            - '## Initialize CloudFormation bits
+
+'
+            - '/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)
+
+'
+            - '## Waiting for EBS mounts to become available
+
+'
+            - 'while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep
+              10; done
+
+'
+            - 'while [ ! -e /dev/vdc ]; do echo waiting for /dev/vdc to attach; sleep
+              10; done
+
+'
+            - 'yum -y install mongo-10gen-server > /tmp/yum-mongo.log 2>&1
+
+'
+            - '(echo mklabel msdos; echo mkpart primary ext2 0 -1; echo set 1 raid
+              on; echo print; echo quit) | parted -a optimal /dev/vdb
+
+'
+            - '(echo mklabel msdos; echo mkpart primary ext2 0 -1; echo set 1 raid
+              on; echo print; echo quit) | parted -a optimal /dev/vdc
+
+'
+            - '## Create RAID10 and persist configuration
+
+'
+            - 'yes | mdadm --verbose --create /dev/md0 --level=1 --raid-devices=2
+              /dev/vdb1 /dev/vdc1 > /tmp/mdadm.log 2>&1
+
+'
+            - 'echo ''`mdadm --detail --scan`'' | tee -a /etc/mdadm.conf
+
+'
+            - '## Set read-ahead on each device
+
+'
+            - 'blockdev --setra 128 /dev/md0
+
+'
+            - 'blockdev --setra 128 /dev/vdb
+
+'
+            - 'blockdev --setra 128 /dev/vdc
+
+'
+            - '## Create physical and logical volumes
+
+'
+            - 'dd if=/dev/zero of=/dev/md0 bs=512 count=1
+
+'
+            - 'pvcreate /dev/md0
+
+'
+            - 'vgcreate vg0 /dev/md0
+
+'
+            - 'lvcreate -l 40%vg -n data vg0
+
+'
+            - 'lvcreate -l 20%vg -n log vg0
+
+'
+            - 'lvcreate -l 40%vg -n journal vg0
+
+'
+            - '## Create filesystems and mount point info
+
+'
+            - 'mke2fs -t ext4 -F /dev/vg0/data > /tmp/mke2fs1.log 2>&1
+
+'
+            - 'mke2fs -t ext4 -F /dev/vg0/log > /tmp/mke2fs2.log 2>&1
+
+'
+            - 'mke2fs -t ext4 -F /dev/vg0/journal > /tmp/mke2fs3.log 2>&1
+
+'
+            - 'mkdir /data
+
+'
+            - 'mkdir /log
+
+'
+            - 'mkdir /journal
+
+'
+            - 'echo ''/dev/vg0/data /data ext4 defaults,auto,noatime,noexec 0 0''
+              | tee -a /etc/fstab
+
+'
+            - 'echo ''/dev/vg0/log /log ext4 defaults,auto,noatime,noexec 0 0'' |
+              tee -a /etc/fstab
+
+'
+            - 'echo ''/dev/vg0/journal /journal ext4 defaults,auto,noatime,noexec
+              0 0'' | tee -a /etc/fstab
+
+'
+            - 'mount /data > /tmp/mount1.log 2>&1
+
+'
+            - 'mount /log > /tmp/mount2.log 2>&1
+
+'
+            - 'mount /journal > /tmp/mount3.log 2>&1
+
+'
+            - 'ln -s /journal /data/journal
+
+'
+            - 'chown -R mongod:mongod /data > /tmp/chown1.log 2>&1
+
+'
+            - 'chown -R mongod:mongod /log > /tmp/chown2.log 2>&1
+
+'
+            - 'chown -R mongod:mongod /journal > /tmp/chown3.log 2>&1
+
+'
+            - 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'sed -i ''s/eth0/eth1/'' /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'ifup eth1
+
+'
+            - '## Update mongod configuration
+
+'
+            - 'cat <<EOF > /etc/mongod.conf
+
+'
+            - 'logpath=/log/mongod.log
+
+'
+            - 'logappend=true
+
+'
+            - 'fork=true
+
+'
+            - 'dbpath=/data
+
+'
+            - 'rest=true
+
+'
+            - 'configsvr=true
+
+'
+            - 'EOF
+
+'
+            - '## Start mongod
+
+'
+            - '/etc/init.d/mongod start > /tmp/mongod-start.log 2>&1
+
+'
+            - '## Extra userdata
+
+'
+            - {Ref: ExtraUserData}
+            - '
+
+'
+            - '## CloudFormation signal that setup is complete
+
+'
+            - /opt/aws/bin/cfn-signal -e 0 -r "ConfigServer setup complete" '
+            - {Ref: WaitHandleConfigSvr}
+            - '''
+
+'
+    Type: AWS::EC2::Instance
+  MongoVolume1:
+    Properties:
+      AvailabilityZone:
+        Fn::GetAtt: [ConfigServer, AvailabilityZone]
+      Size: {Ref: VolumeSize}
+    Type: AWS::EC2::Volume
+  MongoVolume2:
+    Properties:
+      AvailabilityZone:
+        Fn::GetAtt: [ConfigServer, AvailabilityZone]
+      Size: {Ref: VolumeSize}
+    Type: AWS::EC2::Volume
+  MongoVolumeMount1:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: ConfigServer}
+      VolumeId: {Ref: MongoVolume1}
+    Type: AWS::EC2::VolumeAttachment
+  MongoVolumeMount2:
+    Properties:
+      Device: /dev/vdc
+      InstanceId: {Ref: ConfigServer}
+      VolumeId: {Ref: MongoVolume2}
+    Type: AWS::EC2::VolumeAttachment
+  WaitConditionConfigSvr:
+    DependsOn: ConfigServer
+    Properties:
+      Handle: {Ref: WaitHandleConfigSvr}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleConfigSvr:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+

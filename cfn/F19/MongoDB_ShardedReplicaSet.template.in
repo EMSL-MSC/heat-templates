@@ -26,6 +26,7 @@
 			"Description": "Mongo DB Yum Repo", 
 			"Default": "@MongoDBYumRepo@",
 			"Type": "String"
+		},
 		"PrimaryNetworkId": {
 			"Default": "@PrimaryNetworkId@", 
 			"Description": "PrimaryNetworkId", 

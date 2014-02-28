@@ -1,0 +1,36 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Outputs:
+  NetworkId:
+    Description: Network ID
+    Value: {Ref: network}
+  SubnetId:
+    Description: Subnet ID
+    Value: {Ref: subnet}
+Parameters:
+  IpPrefix: {Default: 10.0.101, Description: Ip
+      Prefix to use, Type: String}
+Resources:
+  network: {Type: 'OS::Neutron::Net'}
+  subnet:
+    Properties:
+      allocation_pools:
+      - end:
+          Fn::Join:
+          - ''
+          - - {Ref: IpPrefix}
+            - '.240'
+        start:
+          Fn::Join:
+          - ''
+          - - {Ref: IpPrefix}
+            - '.10'
+      cidr:
+        Fn::Join:
+        - ''
+        - - {Ref: IpPrefix}
+          - .0/24
+      gateway_ip: ''
+      ip_version: 4
+      network_id: {Ref: network}
+    Type: OS::Neutron::Subnet
+
