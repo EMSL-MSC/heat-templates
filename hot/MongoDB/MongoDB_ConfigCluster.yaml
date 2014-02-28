@@ -118,7 +118,7 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ConfigSvr.template
+          - /MongoDB_ConfigSvr.yaml
     Type: AWS::CloudFormation::Stack
   ConfigSvr2:
     Properties:
@@ -166,7 +166,7 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ConfigSvr.template
+          - /MongoDB_ConfigSvr.yaml
     Type: AWS::CloudFormation::Stack
   ConfigSvr3:
     Properties:
@@ -214,6 +214,6 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ConfigSvr.template
+          - /MongoDB_ConfigSvr.yaml
     Type: AWS::CloudFormation::Stack
 

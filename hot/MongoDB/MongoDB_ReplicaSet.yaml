@@ -129,7 +129,7 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ReplicaSetMember.template
+          - /MongoDB_ReplicaSetMember.yaml
     Type: AWS::CloudFormation::Stack
   ReplicaSetMember2:
     Properties:
@@ -152,6 +152,6 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ReplicaSetMember.template
+          - /MongoDB_ReplicaSetMember.yaml
     Type: AWS::CloudFormation::Stack
 

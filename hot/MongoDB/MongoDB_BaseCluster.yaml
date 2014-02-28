@@ -133,7 +133,7 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_Network.template
+          - /MongoDB_Network.yaml
     Type: AWS::CloudFormation::Stack
   ConfigCluster:
     Properties:
@@ -158,7 +158,7 @@ Resources:
           - - 'yum install -y httpd
 
 '
-            - "for FILE in MongoDB_ShardedReplicaSet.template MongoDB_Router.template;
+            - "for FILE in MongoDB_ShardedReplicaSet.yaml MongoDB_Router.yaml;
               do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
@@ -198,6 +198,6 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ConfigCluster.template
+          - /MongoDB_ConfigCluster.yaml
     Type: AWS::CloudFormation::Stack
 
