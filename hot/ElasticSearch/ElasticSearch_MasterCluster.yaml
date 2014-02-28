@@ -1,0 +1,283 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: ElasticSearch Master Cluster
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL-6.4-x86_64-cfntools}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  MasterSvr1:
+    Description: public DNS name of the ElasticSearch master server
+      1
+    Value:
+      Fn::GetAtt: [MasterSvr1, Outputs.MasterSvrName]
+  MasterSvr2:
+    Description: public DNS name of the ElasticSearch master server
+      2
+    Value:
+      Fn::GetAtt: [MasterSvr2, Outputs.MasterSvrName]
+  MasterSvr3:
+    Description: public DNS name of the ElasticSearch master server
+      3
+    Value:
+      Fn::GetAtt: [MasterSvr3, Outputs.MasterSvrName]
+Parameters:
+  ClusterName: {Description: Cluster Name, Type: String}
+  ElasticSearchVersion: {Description: ElasticSearch
+      Version, Default: 0.90.6, Type: String}
+  ElasticSearchBaseURL: {Description: ElasticSearch
+      Base URL, Default: 'https://download.elasticsearch.org/elasticsearch/elasticsearch',
+    Type: String}
+  TemplateBaseUrl: {Description: URL for templates,
+    Type: String}
+  PrimarySecurityGroup: {Description: Primary Security
+      Group, Type: String}
+  BackendSecurityGroup: {Description: Backend Security
+      Group, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  BackendIpPrefix: {Default: 10.0.101, Description: Ip
+      Prefix to use, Type: String}
+  BackendNetworkId: {Description: BackendNetworkId,
+    Type: String}
+  BackendSubnetId: {Description: BackendSubnetId,
+    Type: String}
+  MasterSvr1IpPart: {Default: '7', Description: Ip
+      suffix to use, Type: String}
+  MasterSvr2IpPart: {Default: '8', Description: Ip
+      suffix to use, Type: String}
+  MasterSvr3IpPart: {Default: '9', Description: Ip
+      suffix to use, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for
+      this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId,
+    Type: String}
+Resources:
+  MasterSvr1:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '1'
+        ElasticSearchBaseURL: {Ref: ElasticSearchBaseURL}
+        ElasticSearchVersion: {Ref: ElasticSearchVersion}
+        BackendIpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+        Master1IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+        Master2IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+        Master3IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        BackendSubnetId: {Ref: BackendSubnetId}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - MASTERSVR1=
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+            - '
+
+              MASTERSVR2='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+            - '
+
+              MASTERSVR3='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+            - '
+
+'
+            - {Ref: ExtraUserData}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_MasterSvr.template
+    Type: AWS::CloudFormation::Stack
+  MasterSvr2:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '2'
+        ElasticSearchBaseURL: {Ref: ElasticSearchBaseURL}
+        ElasticSearchVersion: {Ref: ElasticSearchVersion}
+        BackendIpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+        Master1IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+        Master2IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+        Master3IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        BackendSubnetId: {Ref: BackendSubnetId}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - MASTERSVR1=
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+            - '
+
+              MASTERSVR2='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+            - '
+
+              MASTERSVR3='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+            - '
+
+'
+            - {Ref: ExtraUserData}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_MasterSvr.template
+    Type: AWS::CloudFormation::Stack
+  MasterSvr3:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '3'
+        ElasticSearchBaseURL: {Ref: ElasticSearchBaseURL}
+        ElasticSearchVersion: {Ref: ElasticSearchVersion}
+        BackendIpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+        Master1IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+        Master2IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+        Master3IpAddress:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        BackendSubnetId: {Ref: BackendSubnetId}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - MASTERSVR1=
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr1IpPart}
+            - '
+
+              MASTERSVR2='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr2IpPart}
+            - '
+
+              MASTERSVR3='
+            - {Ref: BackendIpPrefix}
+            - .
+            - {Ref: MasterSvr3IpPart}
+            - '
+
+'
+            - {Ref: ExtraUserData}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_MasterSvr.template
+    Type: AWS::CloudFormation::Stack
+

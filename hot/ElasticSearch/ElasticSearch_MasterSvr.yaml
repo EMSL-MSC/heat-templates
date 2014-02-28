@@ -1,0 +1,265 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: ElasticSearch Master Server
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL6-base}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  MasterSvrName:
+    Description: public DNS name of the ElasticSearch Master Server
+      Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [BackendInterface, fixed_ips]
+Parameters:
+  ClusterName: {Description: ClusterName, Type: String}
+  SvrId: {Description: SvrId, Type: String}
+  ElasticSearchVersion: {Description: ElasticSearch
+      Version, Default: 0.90.6, Type: String}
+  ElasticSearchBaseURL: {Description: ElasticSearch
+      Base URL, Default: 'https://download.elasticsearch.org/elasticsearch/elasticsearch',
+    Type: String}
+  PrimarySecurityGroup: {Description: Primary Security
+      Group, Type: String}
+  BackendSecurityGroup: {Description: Backend Security
+      Group, Type: String}
+  BackendIpAddress: {Description: BackendIpAddress,
+    Type: String}
+  Master1IpAddress: {Description: MasterIpAddress,
+    Type: String}
+  Master2IpAddress: {Description: MasterIpAddress,
+    Type: String}
+  Master3IpAddress: {Description: MasterIpAddress,
+    Type: String}
+  BackendNetworkId: {Description: BackendNetworkId,
+    Type: String}
+  BackendSubnetId: {Description: BackendSubnetId,
+    Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for
+      this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId,
+    Type: String}
+  StartupTimeout: {Default: '700', Description: How
+      long to wait on node coming up, Type: Number}
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: ClusterName}
+          - -Master
+          - {Ref: SvrId}
+          - -PrimaryPort
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups:
+      - {Ref: PrimarySecurityGroup}
+    Type: OS::Neutron::Port
+  BackendInterface:
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: ClusterName}
+          - -Master
+          - {Ref: SvrId}
+          - -BackendPort
+      fixed_ips:
+      - ip_address: {Ref: BackendIpAddress}
+        subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
+      security_groups:
+      - {Ref: BackendSecurityGroup}
+    Type: OS::Neutron::Port
+  MasterServer:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              mdadm: []
+              sysstat: []
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: ClusterName}
+          - -Master
+          - {Ref: SvrId}
+      availability_zone: {Ref: InstanceZone}
+      image:
+        Fn::FindInMap:
+        - DistroArch2AMI
+        - {Ref: LinuxDistribution}
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - {Ref: InstanceType}
+          - Arch
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+      - port: {Ref: PrimaryInterface}
+      - port: {Ref: BackendInterface}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - '#!/bin/bash
+
+'
+            - 'yum update -y aws-cfn-bootstrap
+
+'
+            - 'yum install -y java-1.6.0-openjdk
+
+'
+            - '## Error reporting helper function
+
+'
+            - 'function error_exit
+
+'
+            - '{
+
+'
+            - '   /opt/aws/bin/cfn-signal -e 1 -r "$1" '''
+            - {Ref: WaitHandleMasterSvr}
+            - '''
+
+'
+            - '   exit 1
+
+'
+            - '}
+
+'
+            - '## Initialize CloudFormation bits
+
+'
+            - '/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)
+
+'
+            - 'rpm -Uvh '
+            - Fn::Join:
+              - ''
+              - - {Ref: ElasticSearchBaseURL}
+                - /elasticsearch-
+                - {Ref: ElasticSearchVersion}
+                - .noarch.rpm
+            - ' > /tmp/yum-elasticsearch.log 2>&1
+
+'
+            - 'killall java
+
+'
+            - 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'sed -i ''s/eth0/eth1/'' /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1
+
+'
+            - 'ifup eth1
+
+'
+            - '## Update elasticsearch configuration
+
+'
+            - 'cat <<EOF > /etc/elasticsearch/elasticsearch.yml
+
+'
+            - 'network.host: '
+            - {Ref: BackendIpAddress}
+            - '
+
+'
+            - 'node.master: true
+
+'
+            - 'node.data: false
+
+'
+            - 'discovery.zen.minimum_master_nodes: 2
+
+'
+            - 'discovery.zen.ping.multicast.enabled: false
+
+'
+            - 'discovery.zen.ping.unicast.hosts: ['
+            - Fn::Join:
+              - ''
+              - - '"'
+                - {Ref: Master1IpAddress}
+                - :9300", "
+                - {Ref: Master2IpAddress}
+                - :9300", "
+                - {Ref: Master3IpAddress}
+            - ':9300"]
+
+'
+            - 'EOF
+
+'
+            - '## Start elasticsearch
+
+'
+            - '/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1
+
+'
+            - '## Extra userdata
+
+'
+            - {Ref: ExtraUserData}
+            - '
+
+'
+            - '## CloudFormation signal that setup is complete
+
+'
+            - /opt/aws/bin/cfn-signal -e 0 -r "MasterServer setup complete" '
+            - {Ref: WaitHandleMasterSvr}
+            - '''
+
+'
+    Type: OS::Nova::Server
+  WaitConditionMasterSvr:
+    DependsOn: MasterServer
+    Properties:
+      Handle: {Ref: WaitHandleMasterSvr}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleMasterSvr:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+

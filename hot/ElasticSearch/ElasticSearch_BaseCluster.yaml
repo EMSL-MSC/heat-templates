@@ -1,0 +1,224 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: ElasticSearch Base Cluster
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL6-base}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  LoadBalancerId:
+    Description: Load Balancer Id
+    Value: {Ref: LoadBalancer}
+  LoadBalancerIp:
+    Description: Load Balancer Ip
+    Value:
+      Fn::Join:
+      - ''
+      - - {Ref: BackendIpPrefix}
+        - '.2'
+  LoadBalancerPort: {Description: Load Balancer Port,
+    Value: 9200}
+  PrimaryMasterSecurityGroup:
+    Description: Primary Master Security Group ID
+    Value: {Ref: PrimaryMasterSecurityGroup}
+  PrimaryDataSecurityGroup:
+    Description: Primary Data Security Group ID
+    Value: {Ref: PrimaryDataSecurityGroup}
+  BackendSecurityGroup:
+    Description: Backend Security Group ID
+    Value: {Ref: BackendSecurityGroup}
+  BackendNetworkId:
+    Description: Backend Network ID
+    Value:
+      Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
+  BackendSubnetId:
+    Description: Backend Subnet ID
+    Value:
+      Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
+  MasterSvr1:
+    Description: public DNS name of the ElasticSearch master server 1
+    Value:
+      Fn::GetAtt: [MasterCluster, Outputs.MasterSvr1]
+  MasterSvr2:
+    Description: public DNS name of the ElasticSearch master server 2
+    Value:
+      Fn::GetAtt: [MasterCluster, Outputs.MasterSvr2]
+  MasterSvr3:
+    Description: public DNS name of the ElasticSearch master server 3
+    Value:
+      Fn::GetAtt: [MasterCluster, Outputs.MasterSvr3]
+Parameters:
+  ElasticSearchVersion: {Description: ElasticSearch
+      Version, Default: 0.90.6, Type: String}
+  ElasticSearchBaseURL: {Description: ElasticSearch
+      Base URL, Default: 'https://download.elasticsearch.org/elasticsearch/elasticsearch',
+    Type: String}
+  BackendIpPrefix: {Default: 10.0.102, Description: Ip
+      Prefix to use, Type: String}
+  TemplateBaseUrl: {Description: URL for templates,
+    Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.large
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceTypeMasterSvr:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Default: nova, Description: AvailabilityZone
+      for this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId,
+    Type: String}
+Resources:
+  PrimaryMasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Primary Master Server Security Group
+      SecurityGroupIngress:
+      - {CidrIp: 0.0.0.0/0, FromPort: '22', IpProtocol: tcp, ToPort: '22'}
+      - {CidrIp: 0.0.0.0/0, FromPort: '80', IpProtocol: tcp, ToPort: '80'}
+      VpcId: {Ref: PrimaryNetworkId}
+  PrimaryDataSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Primary Master Server Security Group
+      SecurityGroupIngress:
+      - {CidrIp: 0.0.0.0/0, FromPort: '22', IpProtocol: tcp, ToPort: '22'}
+      VpcId: {Ref: PrimaryNetworkId}
+  BackendSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Backend Master Server Security Group
+      SecurityGroupIngress:
+      - {IpProtocol: icmp}
+      - {CidrIp: 0.0.0.0/0, FromPort: '22', IpProtocol: tcp, ToPort: '22'}
+      - {CidrIp: 0.0.0.0/0, FromPort: '9200', IpProtocol: tcp, ToPort: '9299'}
+      - {CidrIp: 0.0.0.0/0, FromPort: '9300', IpProtocol: tcp, ToPort: '9400'}
+      VpcId:
+        Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
+  BackendNetwork:
+    Properties:
+      Parameters:
+        IpPrefix: {Ref: BackendIpPrefix}
+        ClusterName: {Ref: 'AWS::StackName'}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_Network.template
+    Type: AWS::CloudFormation::Stack
+  LoadBalancerMonitor:
+    Type: OS::Neutron::HealthMonitor
+    Properties: {delay: 60, max_retries: 5,
+      timeout: 10, type: HTTP, url_path: /_cluster/nodes}
+  LoadBalancer:
+    Type: OS::Neutron::Pool
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - -LoadBalancer
+      protocol: HTTP
+      subnet_id:
+        Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
+      lb_method: LEAST_CONNECTIONS
+      monitors:
+      - {Ref: LoadBalancerMonitor}
+      vip:
+        address:
+          Fn::Join:
+          - ''
+          - - {Ref: BackendIpPrefix}
+            - '.2'
+        protocol_port: 9200
+  MasterCluster:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: 'AWS::StackName'}
+        ElasticSearchBaseURL: {Ref: ElasticSearchBaseURL}
+        ElasticSearchVersion: {Ref: ElasticSearchVersion}
+        BackendIpPrefix: {Ref: BackendIpPrefix}
+        BackendNetworkId:
+          Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
+        BackendSubnetId:
+          Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
+        InstanceType: {Ref: InstanceTypeMasterSvr}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        PrimarySecurityGroup: {Ref: PrimaryMasterSecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        TemplateBaseUrl: {Ref: TemplateBaseUrl}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - 'yum install -y httpd
+
+'
+            - "for FILE in ElasticSearch_DataNode.template ElasticSearch_Router.template;
+              do \n"
+            - 'curl '
+            - {Ref: TemplateBaseUrl}
+            - "/$FILE.in > /var/www/html/$FILE.in \n"
+            - cat /var/www/html/$FILE.in | sed 's/@PrimaryNetworkId@/
+            - {Ref: PrimaryNetworkId}
+            - /g' | sed 's/@BackendNetworkId@/
+            - Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
+            - /g' | sed 's/@BackendSubnetId@/
+            - Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
+            - /g' | sed 's/@PrimarySecurityGroup@/
+            - {Ref: PrimaryDataSecurityGroup}
+            - /g' | sed 's/@BackendSecurityGroup@/
+            - {Ref: BackendSecurityGroup}
+            - /g' | sed 's/@ClusterName@/
+            - {Ref: 'AWS::StackName'}
+            - /g' | sed 's/@InstanceZone@/
+            - {Ref: InstanceZone}
+            - /g' | sed 's/@KEYNAME@/
+            - {Ref: KeyName}
+            - /g' | sed 's!@TemplateBaseUrl@!
+            - {Ref: TemplateBaseUrl}
+            - '!g'' | sed ''s!@ElasticSearchBaseURL@!'
+            - {Ref: ElasticSearchBaseURL}
+            - /!' | sed 's/@ElasticSearchVersion@/
+            - {Ref: ElasticSearchVersion}
+            - /g' | sed "s/@MASTERSVR1@/$MASTERSVR1/g" | sed "s/@MASTERSVR2@/$MASTERSVR2/g"
+              | sed "s/@MASTERSVR3@/$MASTERSVR3/g"
+            - ' > /var/www/html/$FILE
+
+'
+            - 'done
+
+'
+            - '/etc/init.d/httpd restart
+
+'
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_MasterCluster.template
+    Type: AWS::CloudFormation::Stack
+

@@ -1,0 +1,26 @@
+Due to some heat limitations, the ElasticSearch templates are currently broken up into a few pieces. Heat limitations are
+expected to be resolved in Icehouse.
+
+To start a new ElasticSearch cluster, spawn stack:
+ElasticSearch_BaseCluster.template
+
+This sets up all of your static cluster bits. Security groups, network, master servers, etc.
+
+Once this stack is started, either download the following two files from one of the master servers or assign a
+floating-ip to one of them so that you can use the url directly from the OpenStack Dashboard or CLI:
+ * http://<floating ip>/ElasticSearch_DataNode.template
+ * http://<floating ip>/ElasticSearch_Router.template
+
+It is done this way so that you don't have to go lookup a dozen values from
+the BaseCluster stack's output and enter them every time you want to start up
+a new DataNode or Router.
+
+You need to start at least one DataNode and one Router in order to have a
+working cluster.
+
+Lastly, for each Router you start, you currently need to manually add it to
+the LoadBalancer due to a Neutron limitation in Heat. It can not be done via
+Dashboard either due to different, but similar limitation.
+
+It may be done via the command line as follows:
+neutron lb-member-create --address <RouterStack.Output.MemberName> --protocol-port 9200 <BaseStack.Output.LoadBalancerId>
