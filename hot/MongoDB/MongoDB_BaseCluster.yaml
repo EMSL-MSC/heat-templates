@@ -179,11 +179,11 @@ Resources:
             - {Ref: BackendRouterSecurityGroup}
             - /g' | sed 's/@KEYNAME@/
             - {Ref: KeyName}
-            - /g' | sed 's/@TemplateBaseUrl@/
+            - /g' | sed 's!@TemplateBaseUrl@!
             - {Ref: TemplateBaseUrl}
-            - /g' | sed 's/@MongoDBYumRepo@/
+            - !g' | sed 's!@MongoDBYumRepo@!
             - {Ref: MongoDBYumRepo}
-            - /g' | sed "s/@CONFIGSVR1@/$CONFIGSVR1/g" | sed "s/@CONFIGSVR2@/$CONFIGSVR2/g"
+            - !g' | sed "s/@CONFIGSVR1@/$CONFIGSVR1/g" | sed "s/@CONFIGSVR2@/$CONFIGSVR2/g"
               | sed "s/@CONFIGSVR3@/$CONFIGSVR3/g"
             - ' > /var/www/html/$FILE
 

@@ -58,7 +58,7 @@ Parameters:
     Type: String
   PrimaryNetworkId: {Description: PrimaryNetworkId,
     Type: String}
-  StartupTimeout: {Default: '700', Description: How
+  StartupTimeout: {Default: '1700', Description: How
       long to wait on node coming up, Type: Number}
   VolumeSize: {Default: '2', Description: Volume
       size for each EBS volume, Type: Number}
