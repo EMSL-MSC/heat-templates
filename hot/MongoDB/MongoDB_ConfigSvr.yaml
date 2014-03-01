@@ -27,7 +27,7 @@ Outputs:
         - Fn::GetAtt: [BackendInterface, fixed_ips]
 Parameters:
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
   PrimarySecurityGroup: {Description: Primary Security
       Group, Type: String}

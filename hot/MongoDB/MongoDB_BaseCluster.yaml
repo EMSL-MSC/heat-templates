@@ -44,7 +44,7 @@ Outputs:
       Fn::GetAtt: [ConfigCluster, Outputs.ConfigSvr3]
 Parameters:
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
   BackendIpPrefix: {Default: 10.0.101, Description: Ip
       Prefix to use, Type: String}

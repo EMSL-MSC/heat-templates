@@ -51,7 +51,7 @@ Parameters:
   ConfigSvr3IpPart: {Default: '9', Description: Ip
       suffix to use, Type: String}
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,

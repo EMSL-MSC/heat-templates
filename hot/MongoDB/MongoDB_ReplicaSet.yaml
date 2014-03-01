@@ -42,7 +42,7 @@ Parameters:
   KeyName: {Description: Name of an existing EC2 KeyPair
       to enable SSH access, Type: String}
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/RPMS/',
+    Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
   LinuxDistribution:
     AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
