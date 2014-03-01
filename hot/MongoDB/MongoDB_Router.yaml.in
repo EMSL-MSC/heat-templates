@@ -7,6 +7,7 @@ Mappings:
     m1.small: {Arch: '64'}
     m1.tiny: {Arch: '64'}
     m1.xlarge: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
   DistroArch2AMI:
     F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
     F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
