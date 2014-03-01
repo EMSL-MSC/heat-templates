@@ -127,6 +127,6 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /MongoDB_ReplicaSet.template
+          - /MongoDB_ReplicaSet.yaml
     Type: AWS::CloudFormation::Stack
 
