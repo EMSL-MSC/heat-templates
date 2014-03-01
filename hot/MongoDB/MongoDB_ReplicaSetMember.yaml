@@ -59,7 +59,7 @@ Parameters:
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
     Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
-  StartupTimeout: {Default: '600', Description: How
+  StartupTimeout: {Default: '1600', Description: How
       long to wait on node coming up, Type: Number}
   VolumeSize: {Default: '40', Description: Volume
       size for each EBS volume, Type: Number}
