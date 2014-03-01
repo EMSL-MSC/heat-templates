@@ -33,7 +33,7 @@ Parameters:
     Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
-      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
     Default: m1.large
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
