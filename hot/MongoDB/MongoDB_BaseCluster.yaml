@@ -49,8 +49,10 @@ Parameters:
     Type: String}
   BackendIpPrefix: {Default: 10.0.101, Description: Ip
       Prefix to use, Type: String}
-  TemplateBaseUrl: {Description: URL for templates,
-    Type: String}
+  TemplateBaseUrl:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/hot/MongoDB/'
+    Description: URL for templates
+    Type: String
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
       m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
