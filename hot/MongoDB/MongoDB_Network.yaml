@@ -19,14 +19,14 @@ Resources:
       name:
         Fn::Join:
         - ''
-        - - { "ref": "ClusterName"}
+        - - {Ref: ClusterName}
           - '-BackendNetwork'
   subnet:
     Properties:
       name:
         Fn::Join:
         - ''
-        - - { "ref": "ClusterName"}
+        - - {Ref: ClusterName}
           - '-BackendSubnet'
       allocation_pools:
       - end:
