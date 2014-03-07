@@ -163,7 +163,7 @@ Resources:
           - - 'yum install -y httpd
 
 '
-            - "for FILE in MongoDB_ShardedReplicaSet.yaml MongoDB_Router.yaml;
+            - "for FILE in MongoDB_ShardedReplicaSet.yaml MongoDB_ScalableRouter.yaml;
               do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
@@ -184,6 +184,8 @@ Resources:
             - {Ref: BackendRouterSecurityGroup}
             - /g' | sed 's/@KEYNAME@/
             - {Ref: KeyName}
+            - /g' | sed 's/@ClusterName@/
+            - {Ref: ClusterName}
             - /g' | sed 's!@TemplateBaseUrl@!
             - {Ref: TemplateBaseUrl}
             - '!g'' | sed ''s!@MongoDBYumRepo@!'

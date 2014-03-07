@@ -27,6 +27,9 @@ Outputs:
     Value:
       Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
 Parameters:
+  ClusterName:
+    Description: Cluster Name
+    Type: String
   BackendNetworkId: {Description: BackendNetworkId,
     Type: String}
   BackendSubnetId: {Description: BackendSubnetId,
@@ -68,6 +71,8 @@ Resources:
     DependsOn: ReplicaSetMember2
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '1'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendNetworkId: {Ref: BackendNetworkId}
         BackendSubnetId: {Ref: BackendSubnetId}
@@ -134,6 +139,8 @@ Resources:
   ReplicaSetMember2:
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '2'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendNetworkId: {Ref: BackendNetworkId}
         BackendSubnetId: {Ref: BackendSubnetId}

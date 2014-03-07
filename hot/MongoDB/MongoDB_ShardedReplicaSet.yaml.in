@@ -10,6 +10,10 @@ Outputs:
     Value:
       Fn::GetAtt: [ReplicaSet, Outputs.ReplicaSetMemberName2]
 Parameters:
+  ClusterName:
+    Default: "@ClusterName@" 
+    Description: Cluster Name
+    Type: String
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
     Default: '@MongoDBYumRepo@', Type: String}
   PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
@@ -55,6 +59,7 @@ Resources:
   ReplicaSet:
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
         BackendNetworkId: {Ref: BackendNetworkId}
         BackendSubnetId: {Ref: BackendSubnetId}
         InstanceType: {Ref: InstanceType}

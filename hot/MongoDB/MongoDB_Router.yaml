@@ -26,18 +26,18 @@ Outputs:
         - '0'
         - Fn::GetAtt: [BackendInterface, fixed_ips]
 Parameters:
-  PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
-    Description: PrimaryNetworkId, Type: String}
-  BackendNetworkId: {Default: '@BackendNetworkId@',
-    Description: BackendNetworkId, Type: String}
-  ConfigSvr1: {Description: First Mongodb config server,
-    Default: '@CONFIGSVR1@', Type: String}
-  ConfigSvr2: {Description: Second Mongodb config
-      server, Default: '@CONFIGSVR2@', Type: String}
-  ConfigSvr3: {Description: Third Mongodb config server,
-    Default: '@CONFIGSVR3@', Type: String}
-  MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: '@MongoDBYumRepo@', Type: String}
+  ClusterName:
+    Description: Cluster Name
+    Type: String
+  SvrId:
+    Description: Server ID
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  BackendNetworkId: {Description: BackendNetworkId, Type: String}
+  ConfigSvr1: {Description: First Mongodb config server, Type: String}
+  ConfigSvr2: {Description: Second Mongodb config server, Type: String}
+  ConfigSvr3: {Description: Third Mongodb config server, Type: String}
+  MongoDBYumRepo: {Description: Mongo DB Yum Repo, Type: String}
   ExtraUserData: {Default: '', Description: Extra
       UserData script, Type: String}
   InstanceType:
@@ -49,29 +49,41 @@ Parameters:
   InstanceZone: {Description: AvailabilityZone for
       this instance, Default: nova, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
-      to enable SSH access, Default: '@KEYNAME@', Type: String}
+      to enable SSH access, Type: String}
   LinuxDistribution:
     AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
     Default: SL6
     Description: Distribution of choice
     Type: String
   PrimarySecurityGroup: {Description: Primary MongoDB
-      security group name, Default: '@PrimaryRouterSecurityGroup@',
-    Type: String}
+      security group name, Type: String}
   BackendSecurityGroup: {Description: Backend MongoDB
-      security group name, Default: '@BackendRouterSecurityGroup@',
-    Type: String}
+      security group name, Type: String}
   StartupTimeout: {Default: '600', Description: How
       long to wait on node coming up, Type: Number}
 Resources:
   BackendInterface:
     Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: ClusterName}
+            - '-Router'
+            - {Ref: SvrId}
+            - '-BackendPort'
       network_id: {Ref: BackendNetworkId}
       security_groups:
       - {Ref: BackendSecurityGroup}
     Type: OS::Neutron::Port
   PrimaryInterface:
     Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: ClusterName}
+            - '-Router'
+            - {Ref: SvrId}
+            - '-PrimaryPort'
       network_id: {Ref: PrimaryNetworkId}
       security_groups:
       - {Ref: PrimarySecurityGroup}
@@ -106,8 +118,14 @@ Resources:
               mdadm: []
               sysstat: []
     Properties:
-      AvailabilityZone: {Ref: InstanceZone}
-      ImageId:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: ClusterName}
+            - '-Router'
+            - {Ref: SvrId}
+      availability_zone: {Ref: InstanceZone}
+      image:
         Fn::FindInMap:
         - DistroArch2AMI
         - {Ref: LinuxDistribution}
@@ -115,14 +133,12 @@ Resources:
           - AWSInstanceType2Arch
           - {Ref: InstanceType}
           - Arch
-      InstanceType: {Ref: InstanceType}
-      KeyName: {Ref: KeyName}
-      NetworkInterfaces:
-      - DeviceIndex: '0'
-        NetworkInterfaceId: {Ref: PrimaryInterface}
-      - DeviceIndex: '1'
-        NetworkInterfaceId: {Ref: BackendInterface}
-      UserData:
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+        - {port: {Ref: BackendInterface}}
+      user_data:
         Fn::Base64:
           Fn::Join:
           - ''
@@ -227,7 +243,7 @@ Resources:
             - '''
 
 '
-    Type: AWS::EC2::Instance
+    Type: OS::Nova::Server
   WaitConditionRouter:
     DependsOn: Router
     Properties:

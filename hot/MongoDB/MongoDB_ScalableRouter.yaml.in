@@ -1,0 +1,96 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: MonboDB ScalableRouter
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
+    F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
+    RHEL-6.1: {32: rhel61-i386-cfntools, 64: rhel61-x86_64-cfntools}
+    RHEL-6.2: {32: rhel62-i386-cfntools, 64: rhel62-x86_64-cfntools}
+    RHEL-6.3: {32: rhel63-i386-cfntools, 64: rhel63-x86_64-cfntools}
+    SL6: {32: NOT IMPLEMENTED, 64: SL6-base}
+    U10: {32: U10-i386-cfntools, 64: U10-x86_64-cfntools}
+Outputs:
+  RouterName:
+    Description: public DNS name of the MongoDB Router Instance
+    Value:
+      Fn::GetAtt: [Router, Outputs.RouterName]
+Parameters:
+  ClusterName:
+    Default: "@ClusterName@" 
+    Description: Cluster Name
+    Type: String
+  SvrId:
+    Description: Server ID
+    Type: String
+  PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
+    Description: PrimaryNetworkId, Type: String}
+  BackendNetworkId: {Default: '@BackendNetworkId@',
+    Description: BackendNetworkId, Type: String}
+  ConfigSvr1: {Description: First Mongodb config server,
+    Default: '@CONFIGSVR1@', Type: String}
+  ConfigSvr2: {Description: Second Mongodb config
+      server, Default: '@CONFIGSVR2@', Type: String}
+  ConfigSvr3: {Description: Third Mongodb config server,
+    Default: '@CONFIGSVR3@', Type: String}
+  MongoDBYumRepo: {Description: Mongo DB Yum Repo,
+    Default: '@MongoDBYumRepo@', Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.tiny]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for
+      this instance, Default: nova, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Default: '@KEYNAME@', Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimarySecurityGroup: {Description: Primary MongoDB
+      security group name, Default: '@PrimaryRouterSecurityGroup@',
+    Type: String}
+  BackendSecurityGroup: {Description: Backend MongoDB
+      security group name, Default: '@BackendRouterSecurityGroup@',
+    Type: String}
+  StartupTimeout: {Default: '600', Description: How
+      long to wait on node coming up, Type: Number}
+  TemplateBaseUrl: {Default: '@TemplateBaseUrl@',
+    Description: URL for templates, Type: String}
+Resources:
+  Router:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: {Ref: SvrId}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        ConfigSvr1: {Ref: ConfigSvr1}
+        ConfigSvr2: {Ref: ConfigSvr2}
+        ConfigSvr3: {Ref: ConfigSvr3}
+        MongoDBYumRepo: {Ref: MongoDBYumRepo}
+        ExtraUserData: {Ref: ExtraUserData}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        LinuxDistribution: {Ref: LinuxDistribution}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        StartupTimeout: {Ref: StartupTimeout}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /MongoDB_Router.yaml
+    Type: AWS::CloudFormation::Stack
