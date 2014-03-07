@@ -185,7 +185,7 @@ Resources:
             - /g' | sed 's/@KEYNAME@/
             - {Ref: KeyName}
             - /g' | sed 's/@ClusterName@/
-            - {Ref: ClusterName}
+            - {Ref: 'AWS::StackName'}
             - /g' | sed 's!@TemplateBaseUrl@!
             - {Ref: TemplateBaseUrl}
             - '!g'' | sed ''s!@MongoDBYumRepo@!'
