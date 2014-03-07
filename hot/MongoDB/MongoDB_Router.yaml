@@ -97,19 +97,12 @@ Resources:
               content:
                 Fn::Join:
                 - ''
-                - - '[10gen]
-
-'
-                  - 'name=10gen Repository
-
-'
-                  - baseurl=
+                - - "[10gen]\n"
+                  - "name=10gen Repository\n"
+                  - "baseurl="
                   - {Ref: MongoDBYumRepo}
-                  - '
-
-                    gpgcheck=0
-
-'
+                  - "\n"
+                  - "gpgcheck=0\n"
               group: root
               mode: '000644'
               owner: root
@@ -142,107 +135,47 @@ Resources:
         Fn::Base64:
           Fn::Join:
           - ''
-          - - '#!/bin/bash
-
-'
-            - 'yum update -y aws-cfn-bootstrap
-
-'
-            - '## Error reporting helper function
-
-'
-            - 'function error_exit
-
-'
-            - '{
-
-'
-            - '   /opt/aws/bin/cfn-signal -e 1 -r "$1" '''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '\n"
             - {Ref: WaitHandleRouter}
-            - '''
-
-'
-            - '   exit 1
-
-'
-            - '}
-
-'
-            - '## Initialize CloudFormation bits
-
-'
-            - '/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)
-
-'
-            - 'yum -y install mongo-10gen-server > /tmp/yum-mongo.log 2>&1
-
-'
-            - 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'sed -i ''s/eth0/eth1/'' /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'ifup eth1
-
-'
-            - '## Update mongod configuration
-
-'
-            - 'cat <<EOF > /etc/mongod.conf
-
-'
-            - 'logpath=/log/mongod.log
-
-'
-            - 'logappend=true
-
-'
-            - 'fork=true
-
-'
-            - 'dbpath=/data
-
-'
-            - 'rest=true
-
-'
-            - 'configsvr=true
-
-'
-            - 'EOF
-
-'
-            - '## Start mongod
-
-'
-            - '/usr/bin/mongos --configdb '
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "yum -y install mongo-10gen-server > /tmp/yum-mongo.log 2>&1\n"
+            - "cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "ifup eth1\n"
+            - "## Update mongod configuration\n"
+            - "cat <<EOF > /etc/mongod.conf\n"
+            - "logpath=/log/mongod.log\n"
+            - "logappend=true\n"
+            - "fork=true\n"
+            - "dbpath=/data\n"
+            - "rest=true\n"
+            - "configsvr=true\n"
+            - "EOF\n"
+            - "## Start mongod\n"
+            - "/usr/bin/mongos --configdb "
             - {Ref: ConfigSvr1}
             - :27019,
             - {Ref: ConfigSvr2}
             - :27019,
             - {Ref: ConfigSvr3}
-            - ':27019 >/var/log/mongos.log 2>&1 &
-
-'
-            - '## Extra userdata
-
-'
+            - ":27019 >/var/log/mongos.log 2>&1 &\n"
+            - "## Extra userdata\n"
             - {Ref: ExtraUserData}
-            - '
-
-'
-            - '## CloudFormation signal that setup is complete
-
-'
-            - /opt/aws/bin/cfn-signal -e 0 -r "Router setup complete" '
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"Router setup complete\" '"
             - {Ref: WaitHandleRouter}
-            - '''
-
-'
+            - "'\n"
     Type: OS::Nova::Server
   WaitConditionRouter:
     DependsOn: Router
