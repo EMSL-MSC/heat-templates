@@ -128,7 +128,6 @@ Resources:
         ReplicaSetName: {Ref: ReplicaSetName}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         ReplicaSetName: {Ref: ReplicaSetName}
-        StartupTimeout: 700
         VolumeSize: {Ref: VolumeSize}
       TemplateURL:
         Fn::Join:
