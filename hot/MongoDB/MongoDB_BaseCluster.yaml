@@ -129,6 +129,7 @@ Resources:
     Properties:
       Parameters:
         IpPrefix: {Ref: BackendIpPrefix}
+        ClusterName: {Ref: 'AWS::StackName'}
       TemplateURL:
         Fn::Join:
         - ''
@@ -138,6 +139,7 @@ Resources:
   ConfigCluster:
     Properties:
       Parameters:
+        ClusterName: {Ref: 'AWS::StackName'}
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendIpPrefix: {Ref: BackendIpPrefix}
         BackendNetworkId:

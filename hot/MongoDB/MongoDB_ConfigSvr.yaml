@@ -26,6 +26,12 @@ Outputs:
         - '0'
         - Fn::GetAtt: [BackendInterface, fixed_ips]
 Parameters:
+  ClusterName:
+    Description: Cluster Name
+    Type: String
+  SrvId:
+    Description: Server ID
+    Type: String
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
     Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
@@ -65,12 +71,26 @@ Parameters:
 Resources:
   PrimaryInterface:
     Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {'Ref': 'ClusterName'}
+            - '-Config'
+            - {'Ref': 'SvrId'}
+            - '-PrimaryPort'
       network_id: {Ref: PrimaryNetworkId}
       security_groups:
       - {Ref: PrimarySecurityGroup}
     Type: OS::Neutron::Port
   BackendInterface:
     Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {'Ref': 'ClusterName'}
+            - '-Config'
+            - {'Ref': 'SvrId'}
+            - '-BackendPort'
       fixed_ips:
       - ip_address: {Ref: BackendIpAddress}
         subnet_id: {Ref: BackendSubnetId}
@@ -108,8 +128,14 @@ Resources:
               mdadm: []
               sysstat: []
     Properties:
-      AvailabilityZone: {Ref: InstanceZone}
-      ImageId:
+      name:
+        Fn::Join:
+          - ''
+          - - {'Ref': 'ClusterName'}
+            - '-Config'
+            - {'Ref': 'SvrId'}
+      availability_zone: {Ref: InstanceZone}
+      image:
         Fn::FindInMap:
         - DistroArch2AMI
         - {Ref: LinuxDistribution}
@@ -117,14 +143,12 @@ Resources:
           - AWSInstanceType2Arch
           - {Ref: InstanceType}
           - Arch
-      InstanceType: {Ref: InstanceType}
-      KeyName: {Ref: KeyName}
-      NetworkInterfaces:
-      - DeviceIndex: '0'
-        NetworkInterfaceId: {Ref: PrimaryInterface}
-      - DeviceIndex: '1'
-        NetworkInterfaceId: {Ref: BackendInterface}
-      UserData:
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+        - {port: {Ref: BackendInterface}}
+      user_data:
         Fn::Base64:
           Fn::Join:
           - ''
@@ -339,19 +363,33 @@ Resources:
             - '''
 
 '
-    Type: AWS::EC2::Instance
+    Type: OS::Nova::Server
   MongoVolume1:
     Properties:
-      AvailabilityZone:
+      name:
+        Fn::Join:
+          - ''
+          - - {'Ref': 'ClusterName'}
+            - '-Config'
+            - {'Ref': 'SvrId'}
+            - '-D1'
+      availability_zone:
         Fn::GetAtt: [ConfigServer, AvailabilityZone]
-      Size: {Ref: VolumeSize}
-    Type: AWS::EC2::Volume
+      size: {Ref: VolumeSize}
+    Type: OS::Cinder::Volume
   MongoVolume2:
     Properties:
-      AvailabilityZone:
+      name:
+        Fn::Join:
+          - ''
+          - - {'Ref': 'ClusterName'}
+            - '-Config'
+            - {'Ref': 'SvrId'}
+            - '-D2'
+      availability_zone:
         Fn::GetAtt: [ConfigServer, AvailabilityZone]
-      Size: {Ref: VolumeSize}
-    Type: AWS::EC2::Volume
+      size: {Ref: VolumeSize}
+    Type: OS::Cinder::Volume
   MongoVolumeMount1:
     Properties:
       Device: /dev/vdb

@@ -30,6 +30,9 @@ Outputs:
     Value:
       Fn::GetAtt: [ConfigSvr3, Outputs.ConfigSvrName]
 Parameters:
+  ClusterName:
+    Description: Cluster Name
+    Type: String
   TemplateBaseUrl: {Description: URL for templates,
     Type: String}
   PrimarySecurityGroup: {Description: Primary Security
@@ -76,6 +79,8 @@ Resources:
   ConfigSvr1:
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '1'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendIpAddress:
           Fn::Join:
@@ -124,6 +129,8 @@ Resources:
   ConfigSvr2:
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '2'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendIpAddress:
           Fn::Join:
@@ -172,6 +179,8 @@ Resources:
   ConfigSvr3:
     Properties:
       Parameters:
+        ClusterName: {Ref: ClusterName}
+        SvrId: '3'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
         BackendIpAddress:
           Fn::Join:

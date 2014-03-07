@@ -9,10 +9,25 @@ Outputs:
 Parameters:
   IpPrefix: {Default: 10.0.101, Description: Ip
       Prefix to use, Type: String}
+  ClusterName:
+    Description: Cluster Name
+    Type: String
 Resources:
-  network: {Type: 'OS::Neutron::Net'}
+  network:
+    Type: 'OS::Neutron::Net'
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - { "ref": "ClusterName"}
+          - '-BackendNetwork'
   subnet:
     Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - { "ref": "ClusterName"}
+          - '-BackendSubnet'
       allocation_pools:
       - end:
           Fn::Join:
