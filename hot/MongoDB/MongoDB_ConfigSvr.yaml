@@ -369,12 +369,12 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {'Ref': 'ClusterName'}
+          - - {Ref: ClusterName}
             - '-Config'
-            - {'Ref': 'SvrId'}
+            - {Ref: SvrId}
             - '-D1'
       availability_zone:
-        Fn::GetAtt: [ConfigServer, AvailabilityZone]
+        Fn::GetAtt: [ConfigServer, availability_zone]
       size: {Ref: VolumeSize}
     Type: OS::Cinder::Volume
   MongoVolume2:
@@ -382,12 +382,12 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {'Ref': 'ClusterName'}
+          - - {Ref: ClusterName}
             - '-Config'
-            - {'Ref': 'SvrId'}
+            - {Ref: SvrId}
             - '-D2'
       availability_zone:
-        Fn::GetAtt: [ConfigServer, AvailabilityZone]
+        Fn::GetAtt: [ConfigServer, availability_zone]
       size: {Ref: VolumeSize}
     Type: OS::Cinder::Volume
   MongoVolumeMount1:
