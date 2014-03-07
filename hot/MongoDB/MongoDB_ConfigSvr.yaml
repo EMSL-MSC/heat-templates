@@ -29,7 +29,7 @@ Parameters:
   ClusterName:
     Description: Cluster Name
     Type: String
-  SrvId:
+  SvrId:
     Description: Server ID
     Type: String
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
