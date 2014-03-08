@@ -79,45 +79,24 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - '## Waiting until mongod has started
-
-'
-            - 'sleep 120
-
-'
-            - '## Create replica set configuration
-
-'
-            - '## The following is only needed on the PRIMARY
-
-'
-            - 'HOSTNAME=`/sbin/ifconfig eth1 | grep ''inet addr:'' | cut -d: -f2 |
-              awk ''{ print $1}''`
-
-'
-            - 'cat <<EOF > /tmp/replicaSetConfigInit.js
-
-'
-            - 'config = {_id: "'
+          - - "## Waiting until mongod has started\n"
+            - "sleep 120\n"
+            - "## Create replica set configuration\n"
+            - "## The following is only needed on the PRIMARY\n"
+            - "HOSTNAME=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | "
+            - "awk '{print $1}'`\n"
+            - "cat <<EOF > /tmp/replicaSetConfigInit.js\n"
+            - "config = {_id: \""
             - {Ref: ReplicaSetName}
-            - '", members : ['
-            - '{_id : 0, host:"$HOSTNAME:27017"},'
-            - '{_id : 1, host:"'
+            - "\", members : ["
+            - "{_id : 0, host:\"$HOSTNAME:27017\"},"
+            - "{_id : 1, host:\""
             - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
-            - :27017"}
-            - ']};
-
-'
-            - 'rs.initiate(config);
-
-'
-            - 'EOF
-
-'
-            - '/usr/bin/mongo /tmp/replicaSetConfigInit.js > /tmp/replica-setup.log
-              2>&1
-
-'
+            - ":27017\"}"
+            - "]};\n"
+            - "rs.initiate(config);\n"
+            - "EOF\n"
+            - "/usr/bin/mongo /tmp/replicaSetConfigInit.js > /tmp/replica-setup.log 2>&1\n"
             - {Ref: ReplicaSet1ExtraUserData}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}

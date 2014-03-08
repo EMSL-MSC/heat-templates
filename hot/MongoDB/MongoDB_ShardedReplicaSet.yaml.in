@@ -74,60 +74,31 @@ Resources:
         ReplicaSet1ExtraUserData:
           Fn::Join:
           - ''
-          - - '/usr/bin/mongos --configdb '
+          - - "/usr/bin/mongos --configdb "
             - {Ref: ConfigSvr1}
             - :27019,
             - {Ref: ConfigSvr2}
             - :27019,
             - {Ref: ConfigSvr3}
-            - ':27019 --port 13370 >/var/log/mongos.log 2>&1 &
-
-'
-            - '## Create replica set configuration
-
-'
-            - '## The following is only needed on the PRIMARY
-
-'
-            - 'cat <<EOF > /tmp/shardInit.js
-
-'
+            - ":27019 --port 13370 >/var/log/mongos.log 2>&1 &\n"
+            - "## Create replica set configuration\n"
+            - "## The following is only needed on the PRIMARY\n"
+            - "cat <<EOF > /tmp/shardInit.js\n"
             - sh.addShard("
             - {Ref: ReplicaSetName}
             - /$HOSTNAME
-            - ':27017");
-
-'
-            - 'EOF
-
-'
-            - 'false
-
-'
+            - "':27017\");\n"
+            - "EOF\n"
+            - "false\n"
             - "while [ $? -ne 0 ]; do \n"
-            - 'sleep 10
-
-'
-            - 'mongo --eval ''var s = rs.status().myState; if (s == 1 || s == 2) {print("READY",
-              s); quit(0)}; quit(1)''
-
-'
-            - 'done
-
-'
-            - 'sleep 20
-
-'
-            - '/usr/bin/mongo --port 13370 /tmp/shardInit.js > /tmp/shard-setup.log
-              2>&1
-
-'
-            - 'sleep 20
-
-'
-            - 'killall mongos
-
-'
+            - "sleep 10\n"
+            - "mongo --eval 'var s = rs.status().myState; if (s == 1 || s == 2) {print(\"READY\","
+            - "s); quit(0)}; quit(1)'\n"
+            - "done\n"
+            - "sleep 20\n"
+            - "/usr/bin/mongo --port 13370 /tmp/shardInit.js > /tmp/shard-setup.log 2>&1\n"
+            - "sleep 20\n"
+            - "killall mongos\n"
       TemplateURL:
         Fn::Join:
         - ''
