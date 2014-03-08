@@ -100,26 +100,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - CONFIGSVR1=
+          - - "CONFIGSVR1="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr1IpPart}
-            - '
-
-              CONFIGSVR2='
+            - "\n"
+            - "CONFIGSVR2="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr2IpPart}
-            - '
-
-              CONFIGSVR3='
+            - "\n"
+            - "CONFIGSVR3="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''
@@ -150,26 +147,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - CONFIGSVR1=
+          - - "CONFIGSVR1="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr1IpPart}
-            - '
-
-              CONFIGSVR2='
+            - "\n"
+            - "CONFIGSVR2="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr2IpPart}
-            - '
-
-              CONFIGSVR3='
+            - "\n"
+            - "CONFIGSVR3="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''
@@ -200,26 +194,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - CONFIGSVR1=
+          - - "CONFIGSVR1="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr1IpPart}
-            - '
-
-              CONFIGSVR2='
+            - "\n"
+            - "CONFIGSVR2="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr2IpPart}
-            - '
-
-              CONFIGSVR3='
+            - "\n"
+            - "CONFIGSVR3="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: ConfigSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''

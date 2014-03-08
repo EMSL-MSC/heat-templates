@@ -11,17 +11,12 @@ Outputs:
       Fn::GetAtt: [ReplicaSet, Outputs.ReplicaSetMemberName2]
 Parameters:
   ClusterName:
-    Default: "@ClusterName@" 
     Description: Cluster Name
     Type: String
-  MongoDBYumRepo: {Description: Mongo DB Yum Repo,
-    Default: '@MongoDBYumRepo@', Type: String}
-  PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
-    Description: PrimaryNetworkId, Type: String}
-  BackendNetworkId: {Default: '@BackendNetworkId@',
-    Description: BackendNetworkId, Type: String}
-  BackendSubnetId: {Default: '@BackendSubnetId@',
-    Description: BackendSubnetId, Type: String}
+  MongoDBYumRepo: {Description: Mongo DB Yum Repo, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  BackendNetworkId: {Description: BackendNetworkId, Type: String}
+  BackendSubnetId: {Description: BackendSubnetId, Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
       m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
@@ -31,7 +26,7 @@ Parameters:
   InstanceZone: {Description: AvailabilityZone for
       this instance, Default: nova, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
-      to enable SSH access, Default: '@KEYNAME@', Type: String}
+      to enable SSH access, Type: String}
   LinuxDistribution:
     AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
     Default: SL6
@@ -40,21 +35,15 @@ Parameters:
   ReplicaSetName: {Description: Name of the MongoDB
       replica set, Type: String}
   PrimarySecurityGroup: {Description: Primary MongoDB
-      security group name, Default: '@PrimaryReplicaSetSecurityGroup@',
-    Type: String}
+      security group name, Type: String}
   BackendSecurityGroup: {Description: Backend MongoDB
-      security group name, Default: '@BackendReplicaSetSecurityGroup@',
-    Type: String}
+      security group name, Type: String}
   VolumeSize: {Default: '40', Description: Volume
       size for each EBS volume, Type: Number}
-  TemplateBaseUrl: {Default: '@TemplateBaseUrl@',
-    Description: URL for templates, Type: String}
-  ConfigSvr1: {Description: First Mongodb config server,
-    Default: '@CONFIGSVR1@', Type: String}
-  ConfigSvr2: {Description: Second Mongodb config
-      server, Default: '@CONFIGSVR2@', Type: String}
-  ConfigSvr3: {Description: Third Mongodb config server,
-    Default: '@CONFIGSVR3@', Type: String}
+  TemplateBaseUrl: {Description: URL for templates, Type: String}
+  ConfigSvr1: {Description: First Mongodb config server, Type: String}
+  ConfigSvr2: {Description: Second Mongodb config server, Type: String}
+  ConfigSvr3: {Description: Third Mongodb config server, Type: String}
 Resources:
   ReplicaSet:
     Properties:

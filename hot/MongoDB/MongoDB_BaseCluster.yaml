@@ -160,47 +160,38 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - 'yum install -y httpd
-
-'
-            - "for FILE in MongoDB_ShardedReplicaSet.yaml MongoDB_ScalableRouter.yaml;
-              do \n"
+          - - "yum install -y httpd\n"
+            - "for FILE in MongoDB_ScalableReplicaSet.yaml MongoDB_ScalableRouter.yaml; do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
             - "/$FILE.in > /var/www/html/$FILE.in \n"
-            - cat /var/www/html/$FILE.in | sed 's/@PrimaryNetworkId@/
+            - "cat /var/www/html/$FILE.in | sed 's/@PrimaryNetworkId@/"
             - {Ref: PrimaryNetworkId}
-            - /g' | sed 's/@BackendNetworkId@/
+            - "/g' | sed 's/@BackendNetworkId@/"
             - Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
-            - /g' | sed 's/@BackendSubnetId@/
+            - "/g' | sed 's/@BackendSubnetId@/"
             - Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
-            - /g' | sed 's/@PrimaryReplicaSetSecurityGroup@/
+            - "/g' | sed 's/@PrimaryReplicaSetSecurityGroup@/"
             - {Ref: PrimaryReplicaSetSecurityGroup}
-            - /g' | sed 's/@BackendReplicaSetSecurityGroup@/
+            - "/g' | sed 's/@BackendReplicaSetSecurityGroup@/"
             - {Ref: BackendReplicaSetSecurityGroup}
-            - /g' | sed 's/@PrimaryRouterSecurityGroup@/
+            - "/g' | sed 's/@PrimaryRouterSecurityGroup@/"
             - {Ref: PrimaryRouterSecurityGroup}
-            - /g' | sed 's/@BackendRouterSecurityGroup@/
+            - "/g' | sed 's/@BackendRouterSecurityGroup@/"
             - {Ref: BackendRouterSecurityGroup}
-            - /g' | sed 's/@KEYNAME@/
+            - "/g' | sed 's/@KEYNAME@/"
             - {Ref: KeyName}
-            - /g' | sed 's/@ClusterName@/
+            - "/g' | sed 's/@ClusterName@/"
             - {Ref: 'AWS::StackName'}
-            - /g' | sed 's!@TemplateBaseUrl@!
+            - "/g' | sed 's!@TemplateBaseUrl@!"
             - {Ref: TemplateBaseUrl}
-            - '!g'' | sed ''s!@MongoDBYumRepo@!'
+            - "'!g'' | sed ''s!@MongoDBYumRepo@!'"
             - {Ref: MongoDBYumRepo}
             - '!g'' | sed "s/@CONFIGSVR1@/$CONFIGSVR1/g" | sed "s/@CONFIGSVR2@/$CONFIGSVR2/g"
               | sed "s/@CONFIGSVR3@/$CONFIGSVR3/g"'
-            - ' > /var/www/html/$FILE
-
-'
-            - 'done
-
-'
-            - '/etc/init.d/httpd restart
-
-'
+            - " > /var/www/html/$FILE\n"
+            - "done\n"
+            - "/etc/init.d/httpd restart\n"
       TemplateURL:
         Fn::Join:
         - ''
