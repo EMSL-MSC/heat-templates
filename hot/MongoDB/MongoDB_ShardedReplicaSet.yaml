@@ -76,7 +76,7 @@ Resources:
             - sh.addShard("
             - {Ref: ReplicaSetName}
             - /$HOSTNAME
-            - "':27017\");\n"
+            - ":27017\");\n"
             - "EOF\n"
             - "false\n"
             - "while [ $? -ne 0 ]; do \n"
