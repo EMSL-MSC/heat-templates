@@ -68,7 +68,7 @@ Parameters:
   BackendIpPrefix: {Default: 10.0.102, Description: Ip
       Prefix to use, Type: String}
   TemplateBaseUrl: {Description: URL for templates,
-    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/hot/ElasticSearch/'
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/hot/ElasticSearch/',
     Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
