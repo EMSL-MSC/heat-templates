@@ -44,7 +44,7 @@ Parameters:
   InstanceType:
     AllowedValues: [m1.small, m1.large, m1.xlarge, m2.xlarge, m2.2xlarge,
       m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
-    Default: m1.large
+    Default: '@InstanceTypeDataNode@'
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
   InstanceZone: {Default: '@InstanceZone@', Description: InstanceZone
