@@ -64,6 +64,8 @@ Parameters:
       long to wait on node coming up, Type: Number}
   VolumeSize: {Default: '40', Description: Volume
       size for each EBS volume, Type: Number}
+  TemplateBaseUrl: {Default: '@TemplateBaseUrl@', Description: URL for templates,
+      Type: String}
 Resources:
   Member:
     Properties:

@@ -70,11 +70,17 @@ Parameters:
   TemplateBaseUrl: {Description: URL for templates,
     Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/hot/ElasticSearch/',
     Type: String}
-  InstanceType:
+  InstanceTypeRouter:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
       m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
     Default: m1.large
-    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Description: EC2 Router instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceTypeDataNode:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
+    Default: m1.large
+    Description: EC2 Router instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
   InstanceTypeMasterSvr:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
@@ -194,6 +200,10 @@ Resources:
             - {Ref: BackendSecurityGroup}
             - "/g' | sed 's/@ClusterName@/"
             - {Ref: 'AWS::StackName'}
+            - "/g' | sed 's/@InstanceTypeRouter@/"
+            - {Ref: InstanceTypeRouter}
+            - "/g' | sed 's/@InstanceTypeDataNode@/"
+            - {Ref: InstanceTypeRouter}
             - "/g' | sed 's/@InstanceZone@/"
             - {Ref: InstanceZone}
             - "/g' | sed 's/@KEYNAME@/"

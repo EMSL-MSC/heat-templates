@@ -61,6 +61,8 @@ Parameters:
     Description: Backend ElasticSearch security group name, Type: String}
   StartupTimeout: {Default: '600', Description: How
       long to wait on node coming up, Type: Number}
+  TemplateBaseUrl: {Default: '@TemplateBaseUrl@', Description: URL for templates,
+      Type: String}
 Resources:
   Router:
     Properties:
