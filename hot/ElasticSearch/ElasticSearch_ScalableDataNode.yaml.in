@@ -71,7 +71,7 @@ Resources:
     Properties:
       Parameters:
         ClusterName: {Ref: ClusterName}
-        DataNodeName: {Ref: RouterName}
+        DataNodeName: {Ref: DataNodeName}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         BackendNetworkId: {Ref: BackendNetworkId}
         MasterSvr1: {Ref: MasterSvr1}
