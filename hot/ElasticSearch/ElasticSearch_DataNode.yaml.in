@@ -200,258 +200,106 @@ Resources:
         Fn::Base64:
           Fn::Join:
           - ''
-          - - '#!/bin/bash
-
-'
-            - 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'sed -i ''s/eth0/eth1/'' /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'ifup eth1
-
-'
-            - 'yum update -y aws-cfn-bootstrap
-
-'
-            - 'yum install -y java-1.6.0-openjdk
-
-'
-            - '## Error reporting helper function
-
-'
-            - 'function error_exit
-
-'
-            - '{
-
-'
-            - '   /opt/aws/bin/cfn-signal -e 1 -r "$1" '''
+          - - "#!/bin/bash\n"
+            - "cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "ifup eth1\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "yum install -y java-1.6.0-openjdk\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r '$1' '"
             - {Ref: WaitHandleDataNode}
-            - '''
-
-'
-            - '   exit 1
-
-'
-            - '}
-
-'
-            - '## Initialize CloudFormation bits
-
-'
-            - '/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)
-
-'
-            - '## Waiting for EBS mounts to become available
-
-'
-            - 'while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep
-              10; done
-
-'
-            - 'while [ ! -e /dev/vdc ]; do echo waiting for /dev/vdc to attach; sleep
-              10; done
-
-'
-            - 'while [ ! -e /dev/vdd ]; do echo waiting for /dev/vdd to attach; sleep
-              10; done
-
-'
-            - 'while [ ! -e /dev/vde ]; do echo waiting for /dev/vde to attach; sleep
-              10; done
-
-'
-            - 'rpm -Uvh '
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "## Waiting for EBS mounts to become available\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "while [ ! -e /dev/vdc ]; do echo waiting for /dev/vdc to attach; sleep 10; done\n"
+            - "while [ ! -e /dev/vdd ]; do echo waiting for /dev/vdd to attach; sleep 10; done\n"
+            - "while [ ! -e /dev/vde ]; do echo waiting for /dev/vde to attach; sleep 10; done\n"
+            - "rpm -Uvh "
             - Fn::Join:
               - ''
               - - {Ref: ElasticSearchBaseURL}
                 - /elasticsearch-
                 - {Ref: ElasticSearchVersion}
                 - .noarch.rpm
-            - ' > /tmp/yum-elasticsearch.log 2>&1
-
-'
-            - 'killall java
-
-'
-            - '## Create RAID10 and persist configuration
-
-'
-            - 'mdadm --verbose --create /dev/md0 --level=10 --chunk=256 --raid-devices=4
-              /dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1
-
-'
-            - 'echo ''`mdadm --detail --scan`'' | tee -a /etc/mdadm.conf
-
-'
-            - '## Set read-ahead on each device
-
-'
-            - 'blockdev --setra 128 /dev/md0
-
-'
-            - 'blockdev --setra 128 /dev/vdb
-
-'
-            - 'blockdev --setra 128 /dev/vdc
-
-'
-            - 'blockdev --setra 128 /dev/vdd
-
-'
-            - 'blockdev --setra 128 /dev/vde
-
-'
-            - '## Create physical and logical volumes
-
-'
-            - 'dd if=/dev/zero of=/dev/md0 bs=512 count=1
-
-'
-            - 'pvcreate /dev/md0
-
-'
-            - 'vgcreate vg0 /dev/md0
-
-'
-            - 'lvcreate -l 80%vg -n data vg0
-
-'
-            - 'lvcreate -l 10%vg -n log vg0
-
-'
-            - 'lvcreate -l 10%vg -n journal vg0
-
-'
-            - '## Create filesystems and mount point info
-
-'
-            - 'mke2fs -t ext4 -F /dev/vg0/data > /tmp/mke2fs1.log 2>&1
-
-'
-            - 'mke2fs -t ext4 -F /dev/vg0/log > /tmp/mke2fs2.log 2>&1
-
-'
-            - 'mke2fs -t ext4 -F /dev/vg0/journal > /tmp/mke2fs3.log 2>&1
-
-'
-            - 'mkdir /data
-
-'
-            - 'mkdir /log
-
-'
-            - 'mkdir /journal
-
-'
-            - 'echo ''/dev/vg0/data /data ext4 defaults,auto,noatime,noexec 0 0''
-              | tee -a /etc/fstab
-
-'
-            - 'echo ''/dev/vg0/log /log ext4 defaults,auto,noatime,noexec 0 0'' |
-              tee -a /etc/fstab
-
-'
-            - 'echo ''/dev/vg0/journal /journal ext4 defaults,auto,noatime,noexec
-              0 0'' | tee -a /etc/fstab
-
-'
-            - 'mount /data > /tmp/mount1.log 2>&1
-
-'
-            - 'mount /log > /tmp/mount2.log 2>&1
-
-'
-            - 'mount /journal > /tmp/mount3.log 2>&1
-
-'
-            - 'ln -s /journal /data/journal
-
-'
-            - 'chown -R elasticsearch:elasticsearch /data > /tmp/chown1.log 2>&1
-
-'
-            - 'chown -R elasticsearch:elasticsearch /log > /tmp/chown2.log 2>&1
-
-'
-            - 'chown -R elasticsearch:elasticsearch /journal > /tmp/chown3.log 2>&1
-
-'
-            - 'MYBACKENDIP=`/sbin/ifconfig eth1 | grep ''inet addr:'' | cut -d: -f2
-              | awk ''{ print $1}''`
-
-'
-            - '## Update elasticsearch configuration
-
-'
-            - 'cat <<EOF > /etc/elasticsearch/elasticsearch.yml
-
-'
-            - 'network.host: $MYBACKENDIP
-
-'
-            - 'path.data: /data
-
-'
-            - 'path.work: /journal
-
-'
-            - 'path.log: /log
-
-'
-            - 'node.master: false
-
-'
-            - 'node.data: true
-
-'
-            - 'discovery.zen.minimum_master_nodes: 2
-
-'
-            - 'discovery.zen.ping.multicast.enabled: false
-
-'
-            - 'discovery.zen.ping.unicast.hosts: ['
+            - " > /tmp/yum-elasticsearch.log 2>&1\n"
+            - "killall java\n"
+            - "## Create RAID10 and persist configuration\n"
+            - "mdadm --verbose --create /dev/md0 --level=10 --chunk=256 --raid-devices=4"
+            - "/dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1\n"
+            - "echo '`mdadm --detail --scan`' | tee -a /etc/mdadm.conf\n"
+            - "## Set read-ahead on each device\n"
+            - "blockdev --setra 128 /dev/md0\n"
+            - "blockdev --setra 128 /dev/vdb\n"
+            - "blockdev --setra 128 /dev/vdc\n"
+            - "blockdev --setra 128 /dev/vdd\n"
+            - "blockdev --setra 128 /dev/vde\n"
+            - "## Create physical and logical volumes\n"
+            - "dd if=/dev/zero of=/dev/md0 bs=512 count=1\n"
+            - "pvcreate /dev/md0\n"
+            - "vgcreate vg0 /dev/md0\n"
+            - "lvcreate -l 80%vg -n data vg0\n"
+            - "lvcreate -l 10%vg -n log vg0\n"
+            - "lvcreate -l 10%vg -n journal vg0\n"
+            - "## Create filesystems and mount point info\n"
+            - "mke2fs -t ext4 -F /dev/vg0/data > /tmp/mke2fs1.log 2>&1\n"
+            - "mke2fs -t ext4 -F /dev/vg0/log > /tmp/mke2fs2.log 2>&1\n"
+            - "mke2fs -t ext4 -F /dev/vg0/journal > /tmp/mke2fs3.log 2>&1\n"
+            - "mkdir /data\n"
+            - "mkdir /log\n"
+            - "mkdir /journal\n"
+            - "echo '/dev/vg0/data /data ext4 defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "echo '/dev/vg0/log /log ext4 defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "echo '/dev/vg0/journal /journal ext4 defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "mount /data > /tmp/mount1.log 2>&1\n"
+            - "mount /log > /tmp/mount2.log 2>&1\n"
+            - "mount /journal > /tmp/mount3.log 2>&1\n"
+            - "ln -s /journal /data/journal\n"
+            - "chown -R elasticsearch:elasticsearch /data > /tmp/chown1.log 2>&1\n"
+            - "chown -R elasticsearch:elasticsearch /log > /tmp/chown2.log 2>&1\n"
+            - "chown -R elasticsearch:elasticsearch /journal > /tmp/chown3.log 2>&1\n"
+            - "MYBACKENDIP=`/sbin/ifconfig eth1 | grep ''inet addr:'' | cut -d: -f2"
+            - " | awk '{ print $1}'`\n"
+            - "## Update elasticsearch configuration\n"
+            - "cat <<EOF > /etc/elasticsearch/elasticsearch.yml\n"
+            - "network.host: $MYBACKENDIP\n"
+            - "path.data: /data\n"
+            - "path.work: /journal\n"
+            - "path.log: /log\n"
+            - "node.master: false\n"
+            - "node.data: true\n"
+            - "discovery.zen.minimum_master_nodes: 2\n"
+            - "discovery.zen.ping.multicast.enabled: false\n"
+            - "discovery.zen.ping.unicast.hosts: ["
             - Fn::Join:
               - ''
               - - '"'
                 - {Ref: MasterSvr1}
-                - :9300", "
+                - ":9300\", \""
                 - {Ref: MasterSvr2}
-                - :9300", "
+                - ":9300\", \""
                 - {Ref: MasterSvr3}
-            - ':9300"]
-
-'
-            - 'EOF
-
-'
-            - '## Start elasticsearch
-
-'
-            - '/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1
-
-'
-            - '## Extra userdata
-
-'
+            - ":9300\"]\n"
+            - "EOF\n"
+            - "## Start elasticsearch\n"
+            - "/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1\n"
+            - "## Extra userdata\n"
             - {Ref: ExtraUserData}
-            - '
-
-'
-            - '## CloudFormation signal that setup is complete
-
-'
-            - /opt/aws/bin/cfn-signal -e 0 -r "DataNodeInstance setup complete" '
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"DataNodeInstance setup complete\" '"
             - {Ref: WaitHandleDataNode}
-            - '''
-
-'
+            - "'\n"
     Type: OS::Nova::Server
   WaitConditionDataNode:
     DependsOn: DataNodeInstance

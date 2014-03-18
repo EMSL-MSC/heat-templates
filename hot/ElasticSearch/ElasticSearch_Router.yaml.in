@@ -125,127 +125,61 @@ Resources:
         Fn::Base64:
           Fn::Join:
           - ''
-          - - '#!/bin/bash
-
-'
-            - 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'sed -i ''s/eth0/eth1/'' /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1
-
-'
-            - 'ifup eth1
-
-'
-            - 'yum update -y aws-cfn-bootstrap
-
-'
-            - 'yum install -y java-1.6.0-openjdk
-
-'
-            - '## Error reporting helper function
-
-'
-            - 'function error_exit
-
-'
-            - '{
-
-'
-            - '   /opt/aws/bin/cfn-signal -e 1 -r "$1" '''
+          - - "#!/bin/bash\n"
+            - "cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n"
+            - "ifup eth1\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "yum install -y java-1.6.0-openjdk\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
             - {Ref: WaitHandleRouter}
-            - '''
-
-'
-            - '   exit 1
-
-'
-            - '}
-
-'
-            - '## Initialize CloudFormation bits
-
-'
-            - '/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)
-
-'
-            - 'rpm -Uvh '
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "rpm -Uvh "
             - Fn::Join:
               - ''
               - - {Ref: ElasticSearchBaseURL}
                 - /elasticsearch-
                 - {Ref: ElasticSearchVersion}
                 - .noarch.rpm
-            - ' > /tmp/yum-elasticsearch.log 2>&1
-
-'
-            - 'killall java
-
-'
-            - 'MYBACKENDIP=`/sbin/ifconfig eth1 | grep ''inet addr:'' | cut -d: -f2
-              | awk ''{ print $1}''`
-
-'
-            - '## Update elasticsearch configuration
-
-'
-            - 'cat <<EOF > /etc/elasticsearch/elasticsearch.yml
-
-'
-            - 'network.host: $MYBACKENDIP
-
-'
-            - 'node.master: false
-
-'
-            - 'node.data: false
-
-'
-            - 'discovery.zen.minimum_master_nodes: 2
-
-'
-            - 'discovery.zen.ping.multicast.enabled: false
-
-'
-            - 'discovery.zen.ping.unicast.hosts: ['
+            - " > /tmp/yum-elasticsearch.log 2>&1\n"
+            - "killall java\n"
+            - "MYBACKENDIP=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2"
+            - " | awk '{ print $1}'`"
+            - "## Update elasticsearch configuration\n"
+            - "cat <<EOF > /etc/elasticsearch/elasticsearch.yml\n"
+            - "network.host: $MYBACKENDIP\n"
+            - "node.master: false\n"
+            - "node.data: false\n"
+            - "discovery.zen.minimum_master_nodes: 2\n"
+            - "discovery.zen.ping.multicast.enabled: false\n"
+            - "discovery.zen.ping.unicast.hosts: ["
             - Fn::Join:
               - ''
               - - '"'
                 - {Ref: MasterSvr1}
-                - :9300", "
+                - ":9300\", \""
                 - {Ref: MasterSvr2}
-                - :9300", "
+                - ":9300\", \""
                 - {Ref: MasterSvr3}
-            - ':9300"]
-
-'
-            - 'EOF
-
-'
-            - '## Start elasticsearch
-
-'
-            - '/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1
-
-'
-            - '## Extra userdata
-
-'
+            - ":9300\"]\n"
+            - "EOF\n"
+            - "## Start elasticsearch\n"
+            - "/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1\n"
+            - "## Extra userdata\n"
             - {Ref: ExtraUserData}
-            - '
-
-'
-            - '## CloudFormation signal that setup is complete
-
-'
-            - /opt/aws/bin/cfn-signal -e 0 -r "RouterInstance setup complete" '
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"RouterInstance setup complete\" '"
             - {Ref: WaitHandleRouter}
-            - '''
-
-'
+            - "'\n"
     Type: OS::Nova::Server
   WaitConditionRouter:
     DependsOn: RouterInstance

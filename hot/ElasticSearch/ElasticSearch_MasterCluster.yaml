@@ -119,26 +119,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - MASTERSVR1=
+          - - "MASTERSVR1="
             - {Ref: BackendIpPrefix}
             - .
             - {Ref: MasterSvr1IpPart}
-            - '
-
-              MASTERSVR2='
+            - "\n"
+            - "MASTERSVR2="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr2IpPart}
-            - '
-
-              MASTERSVR3='
+            - "\n"
+            - "MASTERSVR3="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''
@@ -187,26 +184,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - MASTERSVR1=
+          - - "MASTERSVR1="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr1IpPart}
-            - '
-
-              MASTERSVR2='
+            - "\n"
+            - "MASTERSVR2="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr2IpPart}
-            - '
-
-              MASTERSVR3='
+            - "\n"
+            - "MASTERSVR3="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''
@@ -255,26 +249,23 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - MASTERSVR1=
+          - - "MASTERSVR1="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr1IpPart}
-            - '
-
-              MASTERSVR2='
+            - "\n"
+            - "MASTERSVR2="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr2IpPart}
-            - '
-
-              MASTERSVR3='
+            - "\n"
+            - "MASTERSVR3="
             - {Ref: BackendIpPrefix}
-            - .
+            - "."
             - {Ref: MasterSvr3IpPart}
-            - '
-
-'
+            - "\n"
             - {Ref: ExtraUserData}
+            - "\n"
       TemplateURL:
         Fn::Join:
         - ''

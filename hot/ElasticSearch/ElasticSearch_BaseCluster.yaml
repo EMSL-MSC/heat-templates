@@ -177,47 +177,38 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - 'yum install -y httpd
-
-'
-            - "for FILE in ElasticSearch_DataNode.yaml ElasticSearch_Router.yaml;
-              do \n"
+          - - "yum install -y httpd\n"
+            - "for FILE in ElasticSearch_DataNode.yaml ElasticSearch_Router.yaml; do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
             - "/$FILE.in > /var/www/html/$FILE.in \n"
-            - cat /var/www/html/$FILE.in | sed 's/@PrimaryNetworkId@/
+            - "cat /var/www/html/$FILE.in | sed 's/@PrimaryNetworkId@/"
             - {Ref: PrimaryNetworkId}
-            - /g' | sed 's/@BackendNetworkId@/
+            - "/g' | sed 's/@BackendNetworkId@/"
             - Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
-            - /g' | sed 's/@BackendSubnetId@/
+            - "/g' | sed 's/@BackendSubnetId@/"
             - Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
-            - /g' | sed 's/@PrimarySecurityGroup@/
+            - "/g' | sed 's/@PrimarySecurityGroup@/"
             - {Ref: PrimaryDataSecurityGroup}
-            - /g' | sed 's/@BackendSecurityGroup@/
+            - "/g' | sed 's/@BackendSecurityGroup@/"
             - {Ref: BackendSecurityGroup}
-            - /g' | sed 's/@ClusterName@/
+            - "/g' | sed 's/@ClusterName@/"
             - {Ref: 'AWS::StackName'}
-            - /g' | sed 's/@InstanceZone@/
+            - "/g' | sed 's/@InstanceZone@/"
             - {Ref: InstanceZone}
-            - /g' | sed 's/@KEYNAME@/
+            - "/g' | sed 's/@KEYNAME@/"
             - {Ref: KeyName}
-            - /g' | sed 's!@TemplateBaseUrl@!
+            - "/g' | sed 's!@TemplateBaseUrl@!"
             - {Ref: TemplateBaseUrl}
-            - '!g'' | sed ''s!@ElasticSearchBaseURL@!'
+            - "!g' | sed ''s!@ElasticSearchBaseURL@!"
             - {Ref: ElasticSearchBaseURL}
-            - /!' | sed 's/@ElasticSearchVersion@/
+            - "/!' | sed 's/@ElasticSearchVersion@/"
             - {Ref: ElasticSearchVersion}
-            - /g' | sed "s/@MASTERSVR1@/$MASTERSVR1/g" | sed "s/@MASTERSVR2@/$MASTERSVR2/g"
-              | sed "s/@MASTERSVR3@/$MASTERSVR3/g"
-            - ' > /var/www/html/$FILE
-
-'
-            - 'done
-
-'
-            - '/etc/init.d/httpd restart
-
-'
+            - "/g' | sed \"s/@MASTERSVR1@/$MASTERSVR1/g\" | sed \"s/@MASTERSVR2@/$MASTERSVR2/g\""
+            - " | sed \"s/@MASTERSVR3@/$MASTERSVR3/g\""
+            - " > /var/www/html/$FILE\n"
+            - "done\n"
+            - "/etc/init.d/httpd restart\n"
       TemplateURL:
         Fn::Join:
         - ''
