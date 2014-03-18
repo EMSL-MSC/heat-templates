@@ -92,5 +92,5 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /ElasticSearch_Router.yaml
+          - /ElasticSearch_DataNode.yaml
     Type: AWS::CloudFormation::Stack
