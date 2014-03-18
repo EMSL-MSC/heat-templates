@@ -68,6 +68,7 @@ Parameters:
   BackendIpPrefix: {Default: 10.0.102, Description: Ip
       Prefix to use, Type: String}
   TemplateBaseUrl: {Description: URL for templates,
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/hot/ElasticSearch/'
     Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
@@ -128,7 +129,7 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /ElasticSearch_Network.template
+          - /ElasticSearch_Network.yaml
     Type: AWS::CloudFormation::Stack
   LoadBalancerMonitor:
     Type: OS::Neutron::HealthMonitor
@@ -179,7 +180,7 @@ Resources:
           - - 'yum install -y httpd
 
 '
-            - "for FILE in ElasticSearch_DataNode.template ElasticSearch_Router.template;
+            - "for FILE in ElasticSearch_DataNode.yaml ElasticSearch_Router.yaml;
               do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
@@ -221,6 +222,6 @@ Resources:
         Fn::Join:
         - ''
         - - {Ref: TemplateBaseUrl}
-          - /ElasticSearch_MasterCluster.template
+          - /ElasticSearch_MasterCluster.yaml
     Type: AWS::CloudFormation::Stack
 
