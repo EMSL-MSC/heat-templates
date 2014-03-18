@@ -61,7 +61,7 @@ Outputs:
       Fn::GetAtt: [MasterCluster, Outputs.MasterSvr3]
 Parameters:
   ElasticSearchVersion: {Description: ElasticSearch
-      Version, Default: 0.90.6, Type: String}
+      Version, Default: 1.0.1, Type: String}
   ElasticSearchBaseURL: {Description: ElasticSearch
       Base URL, Default: 'https://download.elasticsearch.org/elasticsearch/elasticsearch',
     Type: String}
