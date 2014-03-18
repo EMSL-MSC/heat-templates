@@ -200,7 +200,7 @@ Resources:
             - {Ref: KeyName}
             - "/g' | sed 's!@TemplateBaseUrl@!"
             - {Ref: TemplateBaseUrl}
-            - "!g' | sed ''s!@ElasticSearchBaseURL@!"
+            - "!g' | sed 's!@ElasticSearchBaseURL@!"
             - {Ref: ElasticSearchBaseURL}
             - "/!' | sed 's/@ElasticSearchVersion@/"
             - {Ref: ElasticSearchVersion}
