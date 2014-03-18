@@ -1,0 +1,91 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: ElasticSearch Scalable Router
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '32'}
+    m1.xlarge: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
+    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
+    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
+    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
+    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
+    SL6: {'32': NOT IMPLEMENTED, '64': SL-6.4-x86_64-cfntools}
+    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
+Outputs:
+  MemberName:
+    Description: public DNS name of the ElasticSearch data node Instance
+    Value:
+      Fn::GetAtt: [Router, Outputs.RouterName]
+Parameters:
+  ClusterName: {Default: '@ClusterName@', Description: Cluster
+      Name, Type: String}
+  RouterName: {Description: Router Name, Type: String}
+  PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
+    Description: PrimaryNetworkId, Type: String}
+  BackendNetworkId: {Default: '@BackendNetworkId@',
+    Description: BackendNetworkId, Type: String}
+  MasterSvr1: {Description: First ElasticSearch master
+      server, Default: '@MASTERSVR1@', Type: String}
+  MasterSvr2: {Description: Second ElasticSearch master
+      server, Default: '@MASTERSVR2@', Type: String}
+  MasterSvr3: {Description: Third ElasticSearch master
+      server, Default: '@MASTERSVR3@', Type: String}
+  ElasticSearchVersion: {Description: ElasticSearch
+      Version, Default: '@ElasticSearchVersion@', Type: String}
+  ElasticSearchBaseURL: {Description: ElasticSearch
+      Base URL, Default: '@ElasticSearchBaseURL@', Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceType:
+    AllowedValues: [m1.small, m1.large, m1.xlarge, m2.xlarge, m2.2xlarge,
+      m2.4xlarge, c1.xlarge, cc1.4xlarge]
+    Default: m1.small
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Default: '@InstanceZone@', Description: AvailabilityZone
+      for this instance, Type: String}
+  KeyName: {Default: '@KEYNAME@', Description: Name
+      of an existing EC2 KeyPair to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimarySecurityGroup: {Default: '@PrimarySecurityGroup@',
+    Description: Primary ElasticSearch security group name, Type: String}
+  BackendSecurityGroup: {Default: '@BackendSecurityGroup@',
+    Description: Backend ElasticSearch security group name, Type: String}
+  StartupTimeout: {Default: '600', Description: How
+      long to wait on node coming up, Type: Number}
+Resources:
+  Router:
+    Properties:
+      Parameters:
+        ClusterName: {Ref: ClusterName}
+        RouterName: {Ref: RouterName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        BackendNetworkId: {Ref: BackendNetworkId}
+        MasterSvr1: {Ref: MasterSvr1}
+        MasterSvr2: {Ref: MasterSvr2}
+        MasterSvr3: {Ref: MasterSvr3}
+        ElasticSearchVersion: {Ref: ElasticSearchVersion}
+        ElasticSearchBaseURL: {Ref: ElasticSearchBaseURL}
+        ExtraUserData: {Ref: ExtraUserData}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        LinuxDistribution: {Ref: LinuxDistribution}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        BackendSecurityGroup: {Ref: BackendSecurityGroup}
+        StartupTimeout: {Ref: StartupTimeout}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: TemplateBaseUrl}
+          - /ElasticSearch_Router.yaml
+    Type: AWS::CloudFormation::Stack
+

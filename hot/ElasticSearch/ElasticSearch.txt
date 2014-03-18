@@ -8,8 +8,8 @@ This sets up all of your static cluster bits. Security groups, network, master s
 
 Once this stack is started, either download the following two files from one of the master servers or assign a
 floating-ip to one of them so that you can use the url directly from the OpenStack Dashboard or CLI:
- * http://<floating ip>/ElasticSearch_DataNode.template
- * http://<floating ip>/ElasticSearch_Router.template
+ * http://<floating ip>/ElasticSearch_ScalableDataNode.yaml
+ * http://<floating ip>/ElasticSearch_ScalableRouter.yaml
 
 It is done this way so that you don't have to go lookup a dozen values from
 the BaseCluster stack's output and enter them every time you want to start up

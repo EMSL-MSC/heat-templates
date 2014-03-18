@@ -178,7 +178,7 @@ Resources:
           Fn::Join:
           - ''
           - - "yum install -y httpd\n"
-            - "for FILE in ElasticSearch_DataNode.yaml ElasticSearch_Router.yaml; do \n"
+            - "for FILE in ElasticSearch_ScalableDataNode.yaml ElasticSearch_ScalableRouter.yaml; do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
             - "/$FILE.in > /var/www/html/$FILE.in \n"

@@ -16,7 +16,7 @@ Mappings:
     SL6: {'32': NOT IMPLEMENTED, '64': SL-6.4-x86_64-cfntools}
     U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
 Outputs:
-  MemberName:
+  RouterName:
     Description: public DNS name of the ElasticSearch data node Instance
     Value:
       Fn::Select:
@@ -25,23 +25,21 @@ Outputs:
         - '0'
         - Fn::GetAtt: [BackendInterface, fixed_ips]
 Parameters:
-  ClusterName: {Default: '@ClusterName@', Description: Cluster
+  ClusterName: {Description: Cluster
       Name, Type: String}
   RouterName: {Description: Router Name, Type: String}
-  PrimaryNetworkId: {Default: '@PrimaryNetworkId@',
-    Description: PrimaryNetworkId, Type: String}
-  BackendNetworkId: {Default: '@BackendNetworkId@',
-    Description: BackendNetworkId, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  BackendNetworkId: { Description: BackendNetworkId, Type: String}
   MasterSvr1: {Description: First ElasticSearch master
-      server, Default: '@MASTERSVR1@', Type: String}
+      server, Type: String}
   MasterSvr2: {Description: Second ElasticSearch master
-      server, Default: '@MASTERSVR2@', Type: String}
+      server, Type: String}
   MasterSvr3: {Description: Third ElasticSearch master
-      server, Default: '@MASTERSVR3@', Type: String}
+      server, Type: String}
   ElasticSearchVersion: {Description: ElasticSearch
-      Version, Default: '@ElasticSearchVersion@', Type: String}
+      Version, Type: String}
   ElasticSearchBaseURL: {Description: ElasticSearch
-      Base URL, Default: '@ElasticSearchBaseURL@', Type: String}
+      Base URL, Type: String}
   ExtraUserData: {Default: '', Description: Extra
       UserData script, Type: String}
   InstanceType:
@@ -50,19 +48,15 @@ Parameters:
     Default: m1.small
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
-  InstanceZone: {Default: '@InstanceZone@', Description: AvailabilityZone
-      for this instance, Type: String}
-  KeyName: {Default: '@KEYNAME@', Description: Name
-      of an existing EC2 KeyPair to enable SSH access, Type: String}
+  InstanceZone: {Description: AvailabilityZone for this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair to enable SSH access, Type: String}
   LinuxDistribution:
     AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
     Default: SL6
     Description: Distribution of choice
     Type: String
-  PrimarySecurityGroup: {Default: '@PrimarySecurityGroup@',
-    Description: Primary ElasticSearch security group name, Type: String}
-  BackendSecurityGroup: {Default: '@BackendSecurityGroup@',
-    Description: Backend ElasticSearch security group name, Type: String}
+  PrimarySecurityGroup: {Description: Primary ElasticSearch security group name, Type: String}
+  BackendSecurityGroup: {Description: Backend ElasticSearch security group name, Type: String}
   StartupTimeout: {Default: '600', Description: How
       long to wait on node coming up, Type: Number}
 Resources:
