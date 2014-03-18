@@ -7,6 +7,8 @@ Mappings:
     m1.small: {Arch: '64'}
     m1.tiny: {Arch: '64'}
     m1.xlarge: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
+    k1.large: {Arch: '64'}
   DistroArch2AMI:
     F17: {32: F17-i386-cfntools, 64: F17-x86_64-cfntools}
     F18: {32: F18-i386-cfntools, 64: F18-x86_64-cfntools}
@@ -69,13 +71,13 @@ Parameters:
     Type: String}
   InstanceType:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
-      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.large]
     Default: m1.large
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
   InstanceTypeMasterSvr:
     AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
-      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge]
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.tiny]
     Default: m1.tiny
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
