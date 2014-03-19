@@ -145,8 +145,18 @@ Resources:
             - "'\n"
             - "   exit 1\n"
             - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
             - "## Initialize CloudFormation bits\n"
-            - "/opt/aws/bin/cfn-init > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
             - "rpm -Uvh "
             - Fn::Join:
               - ''
@@ -155,7 +165,6 @@ Resources:
                 - {Ref: ElasticSearchVersion}
                 - .noarch.rpm
             - " > /tmp/yum-elasticsearch.log 2>&1\n"
-            - "killall java\n"
             - "cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n"
             - "sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n"
             - "echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n"
@@ -169,7 +178,7 @@ Resources:
             - "node.data: false\n"
             - "discovery.zen.minimum_master_nodes: 2\n"
             - "discovery.zen.ping.multicast.enabled: false\n"
-            - "discovery.zen.ping.unicast.hosts: [\n"
+            - "discovery.zen.ping.unicast.hosts: ["
             - Fn::Join:
               - ''
               - - '"'
@@ -181,6 +190,7 @@ Resources:
             - ":9300\"]\n"
             - "EOF\n"
             - "## Start elasticsearch\n"
+            - "chkconfig elasticsearch on\n"
             - "/etc/init.d/elasticsearch start > /tmp/elasticsearch-start.log 2>&1\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}

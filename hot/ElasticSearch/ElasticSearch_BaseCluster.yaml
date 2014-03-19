@@ -140,7 +140,7 @@ Resources:
   LoadBalancerMonitor:
     Type: OS::Neutron::HealthMonitor
     Properties: {delay: 60, max_retries: 5,
-      timeout: 10, type: HTTP, url_path: /_cluster/nodes}
+      timeout: 10, type: HTTP, url_path: /_nodes}
   LoadBalancer:
     Type: OS::Neutron::Pool
     Properties:
