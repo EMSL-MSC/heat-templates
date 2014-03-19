@@ -57,7 +57,7 @@ Parameters:
     Type: String
   PrimarySecurityGroup: {Description: Primary ElasticSearch security group name, Type: String}
   BackendSecurityGroup: {Description: Backend ElasticSearch security group name, Type: String}
-  StartupTimeout: {Default: '600', Description: How
+  StartupTimeout: {Default: '1600', Description: How
       long to wait on node coming up, Type: Number}
   VolumeSize: {Default: '40', Description: Volume
       size for each EBS volume, Type: Number}

@@ -58,7 +58,7 @@ Parameters:
     Type: String
   PrimarySecurityGroup: {Description: Primary ElasticSearch security group name, Type: String}
   BackendSecurityGroup: {Description: Backend ElasticSearch security group name, Type: String}
-  StartupTimeout: {Default: '600', Description: How
+  StartupTimeout: {Default: '1600', Description: How
       long to wait on node coming up, Type: Number}
 Resources:
   BackendInterface:
@@ -156,7 +156,7 @@ Resources:
                 - .noarch.rpm
             - " > /tmp/yum-elasticsearch.log 2>&1\n"
             - "MYBACKENDIP=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2"
-            - " | awk '{ print $1}'`"
+            - " | awk '{ print $1}'`\n"
             - "## Update elasticsearch configuration\n"
             - "cat <<EOF > /etc/elasticsearch/elasticsearch.yml\n"
             - "network.host: $MYBACKENDIP\n"
