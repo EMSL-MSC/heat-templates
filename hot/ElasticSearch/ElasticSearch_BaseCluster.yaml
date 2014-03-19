@@ -183,7 +183,7 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - "yum install -y httpd\n"
+          - - "yum install -y httpd || true\n"
             - "for FILE in ElasticSearch_ScalableDataNode.yaml ElasticSearch_ScalableRouter.yaml; do \n"
             - 'curl '
             - {Ref: TemplateBaseUrl}
