@@ -235,7 +235,7 @@ Resources:
             - " > /tmp/yum-elasticsearch.log 2>&1\n"
             - "## Create RAID10 and persist configuration\n"
             - "mdadm --verbose --create /dev/md0 --level=10 --chunk=256 --raid-devices=4"
-            - "/dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1\n"
+            - " /dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1\n"
             - "echo '`mdadm --detail --scan`' | tee -a /etc/mdadm.conf\n"
             - "## Set read-ahead on each device\n"
             - "blockdev --setra 128 /dev/md0\n"
