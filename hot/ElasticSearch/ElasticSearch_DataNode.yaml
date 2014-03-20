@@ -203,7 +203,7 @@ Resources:
             - "## Error reporting helper function\n"
             - "function error_exit\n"
             - "{\n"
-            - "   /opt/aws/bin/cfn-signal -e 1 -r '$1' '"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
             - {Ref: WaitHandleDataNode}
             - "'\n"
             - "   exit 1\n"
