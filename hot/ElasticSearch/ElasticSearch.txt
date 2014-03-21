@@ -6,6 +6,15 @@ ElasticSearch_BaseCluster.template
 
 This sets up all of your static cluster bits. Security groups, network, master servers, etc.
 
+Note, due to a limitation/bug in neutron lbaas, after launching the load balancer, the load balancer may be assigned the
+wrong security group on its vip. The following procedure can be used to fix it until the bug is resolved (replace content
+listend in <...> with the value requested inside:
+ * run "heat stack-show <your base cluster stackname>". Find the output_value associated with "LoadBalancerId". Also find
+       the output_value associated with "BackendSecurityGroup"
+ * run "eval $(neutron lb-pool-show <output value LoadBalancerId here> -f shell | grep vip_id)"
+ * run "eval $(neutron lb-vip-show $vip_id -f shell | grep port_id)"
+ * run "neutron port-update $port_id --security-group <output value BackendSecurityGroup here>"
+
 Once this stack is started, either download the following two files from one of the master servers or assign a
 floating-ip to one of them so that you can use the url directly from the OpenStack Dashboard or CLI:
  * http://<floating ip>/ElasticSearch_ScalableDataNode.yaml
