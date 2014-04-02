@@ -26,6 +26,7 @@ Outputs:
     Value:
       Ref: Instance
 Parameters:
+  IpAddress: {Description: Floating Ip Address to assign, Type: String}
   VolumeId: {Description: Volume where data lives, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
@@ -136,6 +137,15 @@ Resources:
       InstanceId: {Ref: Instance}
       VolumeId: {Ref: VolumeId}
     Type: AWS::EC2::VolumeAttachment
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: PrimaryNetworkId
+      InstanceId:
+        Ref: Instance
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
   WaitConditionInstance:
     DependsOn: Instance
     Properties:
