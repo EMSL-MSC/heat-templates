@@ -14,13 +14,17 @@ Mappings:
     U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
 Outputs:
   Name:
-    Description: public DNS name of Incance
+    Description: public DNS name of Instance
     Value:
       Fn::Select:
       - ip_address
       - Fn::Select:
         - '0'
         - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+  Id:
+    Description: Instance Id
+    Value:
+      Ref: Instance
 Parameters:
   VolumeId: {Description: Volume where data lives, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
