@@ -1,0 +1,144 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Management Server
+Mappings:
+  AWSInstanceType2Arch:
+    m1.tiny: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
+    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
+    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
+    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
+    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
+    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
+    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
+Outputs:
+  Name:
+    Description: public DNS name of Incance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+Parameters:
+  VolumeId: {Description: Volume where data lives, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, k1.tiny]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.tiny, k1.tiny)
+    Type: String
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              mdadm: []
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+      availability_zone: {Ref: InstanceZone}
+      image:
+        Fn::FindInMap:
+        - DistroArch2AMI
+        - {Ref: LinuxDistribution}
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - {Ref: InstanceType}
+          - Arch
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "yum install -y python-ceilometerclient python-cinderclient python-glanceclient python-heatclient python-keystoneclient python-neutronclient python-novaclient python-openstackclient python-savannaclient python-swiftclient python-troveclient\n"
+            - "## Waiting for EBS mounts to become available\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "/etc/init.d/sshd stop || true \n"
+            - "echo '/dev/mgmt-vg0/mgmt-data /srv ext4 defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "mount /srv\n"
+            - "mv /etc/ssh /etc/ssh.orig\n"
+            - "ln -s /srv/etc/ssh /etc/ssh\n"
+            - "if [ ! -f /srv/root/.ssh/authorized_keys.orig ]; then\n"
+            - "    mv /srv/root/.ssh/authorized_keys /srv/root/.ssh/authorized_keys.orig || true\n"
+            - "    cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
+            - "fi\n"
+            - "rm -rf /root/.ssh\n"
+            - "ln -s /srv/root/.ssh /root/.ssh\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+    Type: OS::Nova::Server
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+

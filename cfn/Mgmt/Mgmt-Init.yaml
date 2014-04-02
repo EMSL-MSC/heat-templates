@@ -1,0 +1,149 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Management Server Create Volumes
+Mappings:
+  AWSInstanceType2Arch:
+    m1.tiny: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
+    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
+    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
+    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
+    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
+    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
+    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
+Outputs:
+  Name:
+    Description: public DNS name of Incance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+Parameters:
+  Name: {Default: 'Mgmt', Description: Name for the volume, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, k1.tiny]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.tiny, k1.tiny)
+    Type: String
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+  VolumeSize: {Default: '1', Description: Volume
+      size for each EBS volume, Type: Number}
+Resources:
+  PrimaryInterface:
+    Properties:
+      network_id: {Ref: PrimaryNetworkId}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              mdadm: []
+    Properties:
+      availability_zone: {Ref: InstanceZone}
+      image:
+        Fn::FindInMap:
+        - DistroArch2AMI
+        - {Ref: LinuxDistribution}
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - {Ref: InstanceType}
+          - Arch
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "## Waiting for EBS mounts to become available\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "(echo mklabel msdos; echo mkpart primary ext2 0 -1;"
+            - "echo print; echo quit) | parted -a optimal /dev/vdb\n"
+            - "blockdev --setra 128 /dev/vdb\n"
+            - "## Create physical and logical volumes\n"
+            - "dd if=/dev/zero of=/dev/vdb1 bs=512 count=1\n"
+            - "pvcreate /dev/vdb1\n"
+            - "vgcreate mgmt-vg0 /dev/vdb1\n"
+            - "lvcreate -l 100%vg -n mgmt-data mgmt-vg0\n"
+            - "## Create filesystems and mount point info\n"
+            - "mke2fs -t ext4 -F /dev/mgmt-vg0/mgmt-data > /tmp/mke2fs1.log 2>&1\n"
+            - "mount /dev/mgmt-vg0/mgmt-data /srv\n"
+            - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
+            - "    /etc/init.d/sshd start\n"
+            - "fi\n"
+            - "mkdir -p /srv/etc\n"
+            - "cp -a /etc/ssh /srv/etc\n"
+            - "mkdir -p /srv/root/.ssh/\n"
+            - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+    Type: OS::Nova::Server
+  Volume:
+    Properties:
+      name: {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      size: {Ref: VolumeSize}
+    Type: OS::Cinder::Volume
+    DeletionPolicy: Retain
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: Volume}
+    Type: AWS::EC2::VolumeAttachment
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
