@@ -121,6 +121,7 @@ Resources:
             - "    mv /srv/root/.ssh/authorized_keys /srv/root/.ssh/authorized_keys.orig || true\n"
             - "    cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
             - "fi\n"
+            - "cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
             - "rm -rf /root/.ssh\n"
             - "ln -s /srv/root/.ssh /root/.ssh\n"
             - "## Extra userdata\n"
