@@ -113,6 +113,7 @@ Resources:
             - "    /etc/init.d/sshd start\n"
             - "fi\n"
             - "mkdir -p /srv/etc\n"
+            - "mkdir -p /srv/home\n"
             - "cp -a /etc/ssh /srv/etc\n"
             - "mkdir -p /srv/root/.ssh/\n"
             - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
