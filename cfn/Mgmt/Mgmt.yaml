@@ -47,13 +47,15 @@ Parameters:
     Type: String
   StartupTimeout: {Default: '1700', Description: How
       long to wait on node coming up, Type: Number}
+  Name: {Description: Name of services in the stack
+      Default: Mgmt, Type: String}
 Resources:
   PrimaryInterface:
     Properties:
       name:
         Fn::Join:
           - ''
-          - - {Ref: 'AWS::StackName'}
+          - - {Ref: Name}
             - '-PrimaryPort'
       network_id: {Ref: PrimaryNetworkId}
     Type: OS::Neutron::Port
@@ -68,7 +70,7 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {Ref: 'AWS::StackName'}
+          - - {Ref: Name}
       availability_zone: {Ref: InstanceZone}
       image:
         Fn::FindInMap:

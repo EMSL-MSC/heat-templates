@@ -1,0 +1,51 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Ops Management Server
+Outputs:
+  Name:
+    Description: Name of instance
+    Value:
+      Fn::GetAtt: [Instance, Outputs.Name]
+Parameters:
+  PrimaryNetworkId:
+    Default: '3ff0dce8-a20e-411c-971b-3f716a025c07'
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: 'ops'
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  VolumeId: 
+    Default: '1e97928d-5503-4f70-a380-0cbb1deab8ff'
+    Description: Id of an existing volume for state
+    Type: String
+  IpAddress:
+    Default: '192.168.0.17'
+    Description: Floating Ip Address to assign
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        Name: {Ref: 'AWS::StackName'}
+        KeyName: {Ref: KeyName}
+        IpAddress: {Ref: IpAddress}
+        VolumeId: {Ref: VolumeId}
+        InstanceType: m1.tiny
+        ExtraUserData:
+          Fn::Join:
+            - "\n"
+            - - "cat << \"EOF\" > /etc/profile.d/ops-openstack.sh"
+              - export OS_AUTH_URL=http://192.168.0.10:5000/v2.0
+              - export OS_TENANT_ID=250944cb43da441391d86b011dbba291
+              - export OS_TENANT_NAME="ops"
+              - export OS_USERNAME="$USER"
+              - 'function openstack_login {'
+              - '	echo "Please enter your OpenStack Password: "'
+              - '	read -sr OS_PASSWORD_INPUT'
+              - '	export OS_PASSWORD=$OS_PASSWORD_INPUT'
+              - '}'
+              - EOF
+              - chmod +x /etc/profile.d/ops-openstack.sh
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/Mgmt/Mgmt.yaml'
+    Type: AWS::CloudFormation::Stack
