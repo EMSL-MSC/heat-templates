@@ -47,8 +47,10 @@ Parameters:
     Type: String
   StartupTimeout: {Default: '1700', Description: How
       long to wait on node coming up, Type: Number}
-  Name: {Description: Name of services in the stack
-      Default: Mgmt, Type: String}
+  Name: 
+    Description: Name of services in the stack
+    Default: Mgmt
+    Type: String
 Resources:
   PrimaryInterface:
     Properties:
