@@ -1,0 +1,178 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Trac Server
+Mappings:
+  AWSInstanceType2Arch:
+    m1.large: {Arch: '64'}
+    m1.medium: {Arch: '64'}
+    m1.small: {Arch: '64'}
+    m1.tiny: {Arch: '64'}
+    m1.xlarge: {Arch: '64'}
+    k1.tiny: {Arch: '64'}
+  DistroArch2AMI:
+    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
+    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
+    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
+    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
+    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
+    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
+    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
+Outputs:
+  Name:
+    Description: public DNS name of the Trac Server
+      Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [BackendInterface, fixed_ips]
+  Id:
+    Description: Instance Id
+    Value:
+      Ref: Instance
+Parameters:
+  Name: {Description: ServerName, Type: String}
+  IpAddress: {Description: Floating Ip Address to assign, Type: String}
+  VolumeId: {Description: Volume where data lives, Type: String}
+  PrimarySecurityGroup: {Description: Primary Security Group, Type: String}
+  ExtraUserData: {Default: '', Description: Extra UserData script, Type: String}
+  InstanceType:
+    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
+      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.tiny]
+    Default: m1.tiny
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone: {Description: AvailabilityZone for this instance, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair to enable SSH access, Type: String}
+  LinuxDistribution:
+    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
+    Default: SL6
+    Description: Distribution of choice
+    Type: String
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  StartupTimeout: {Default: '700', Description: How long to wait on node coming up, Type: Number}
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+          - -PrimaryPort
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups:
+      - {Ref: PrimarySecurityGroup}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              trac: []
+              httpd: []
+              mod_wsgi: []
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      image:
+        Fn::FindInMap:
+        - DistroArch2AMI
+        - {Ref: LinuxDistribution}
+        - Fn::FindInMap:
+          - AWSInstanceType2Arch
+          - {Ref: InstanceType}
+          - Arch
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+      - port: {Ref: PrimaryInterface}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleServer}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "/etc/init.d/sshd stop || true \n"
+            - "echo '/dev/mgmt-vg0/mgmt-data /srv ext4 defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "mount /srv\n"
+            - "mv /etc/ssh /etc/ssh.orig\n"
+            - "rm -rf /home\n"
+            - "ln -s /srv/home /home\n"
+            - "ln -s /srv/etc/ssh /etc/ssh\n"
+            - "if [ ! -f /srv/root/.ssh/authorized_keys.orig ]; then\n"
+            - "    mv /srv/root/.ssh/authorized_keys /srv/root/.ssh/authorized_keys.orig || true\n"
+            - "    cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
+            - "fi\n"
+            - "cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
+            - "rm -rf /root/.ssh\n"
+            - "ln -s /srv/root/.ssh /root/.ssh\n"
+            - "trac-admin /srv/trac deploy /tmp/deploy\n"
+            - "mv -f /tmp/deploy/* /srv/trac\n"
+            - 'cat > /etc/httpd/conf.d/trac.conf << "EOF"\n'
+            - "Alias /trac/chrome/common /srv/trac/htdocs/common\n"
+            - "Alias /trac/chrome/site /srv/trac/htdocs/site\n"
+            - 'Directory "/srv/trac/htdocs">\n'
+            - "  Order allow,deny\n"
+            - "  Allow from all\n"
+            - "</Directory>\n"
+            - "EOF\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "service httpd start\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"Server setup complete\" '"
+            - {Ref: WaitHandleServer}
+            - "'\n"
+    Type: OS::Nova::Server
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: PrimaryNetworkId
+      InstanceId:
+        Ref: Instance
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
+  WaitConditionServer:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleServer}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleServer:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
