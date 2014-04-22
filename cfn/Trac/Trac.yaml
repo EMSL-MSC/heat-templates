@@ -138,6 +138,8 @@ Resources:
             - "rm -rf /root/.ssh\n"
             - "ln -s /srv/root/.ssh /root/.ssh\n"
             - "trac-admin /srv/trac deploy /tmp/deploy\n"
+            - "rm -rf /srv/trac/cgi-bin\n"
+            - "rm -rf /srv/trac/htdocs\n"
             - "mv -f /tmp/deploy/* /srv/trac\n"
             - 'cat > /etc/httpd/conf.d/trac.conf << "EOF"'
             - "\n"
