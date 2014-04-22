@@ -72,9 +72,11 @@ Resources:
         config:
           packages:
             yum:
+              git: []
               trac: []
               httpd: []
               mod_wsgi: []
+              trac-git-plugin: []
     Properties:
       name:
         Fn::Join:
