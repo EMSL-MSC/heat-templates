@@ -141,6 +141,7 @@ Resources:
             - "mv -f /tmp/deploy/* /srv/trac\n"
             - 'cat > /etc/httpd/conf.d/trac.conf << "EOF"'
             - "\n"
+            - "RedirectMatch ^/$ /trac/\n"
             - "Alias /trac/chrome/common /srv/trac/htdocs/common\n"
             - "Alias /trac/chrome/site /srv/trac/htdocs/site\n"
             - "WSGIScriptAlias /trac /srv/trac/cgi-bin/trac.wsgi\n"
