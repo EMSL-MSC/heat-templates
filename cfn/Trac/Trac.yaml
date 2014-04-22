@@ -137,10 +137,19 @@ Resources:
             - "ln -s /srv/root/.ssh /root/.ssh\n"
             - "trac-admin /srv/trac deploy /tmp/deploy\n"
             - "mv -f /tmp/deploy/* /srv/trac\n"
-            - 'cat > /etc/httpd/conf.d/trac.conf << "EOF"\n'
+            - 'cat > /etc/httpd/conf.d/trac.conf << "EOF"'
+            - "\n"
             - "Alias /trac/chrome/common /srv/trac/htdocs/common\n"
             - "Alias /trac/chrome/site /srv/trac/htdocs/site\n"
-            - 'Directory "/srv/trac/htdocs">\n'
+            - "WSGIScriptAlias /trac /srv/trac/cgi-bin/trac.wsgi\n"
+            - '<Directory "/srv/trac/htdocs">'
+            - "\n"
+            - "  Order allow,deny\n"
+            - "  Allow from all\n"
+            - "</Directory>\n"
+            - '<Directory "/srv/trac/cgi-bin">'
+            - "\n"
+            - "  WSGIApplicationGroup %{GLOBAL}\n"
             - "  Order allow,deny\n"
             - "  Allow from all\n"
             - "</Directory>\n"
