@@ -158,7 +158,7 @@ Resources:
             - "  Order allow,deny\n"
             - "  Allow from all\n"
             - "</Directory>\n"
-            - "Alias /$NAME /srv/git/.git\n"
+            - "Alias /$NAME.git /srv/git/.git\n"
             - "<Directory /srv/git/.git>\n"
             - "   DAV on\n"
             - "   include /srv/trac/apache-access.conf\n"
