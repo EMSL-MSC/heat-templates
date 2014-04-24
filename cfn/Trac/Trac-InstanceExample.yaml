@@ -1,0 +1,41 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Test Trac Server
+Outputs:
+  Name:
+    Description: Name of instance
+    Value:
+      Fn::GetAtt: [Instance, Outputs.Name]
+Parameters:
+  PrimaryNetworkId:
+    Default: 'f468de6d-98fa-4ac3-9919-9dda38b623d9'
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: 'ops'
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  VolumeId: 
+    Default: '15589d51-e711-4ed9-83da-f460de57793f'
+    Description: Id of an existing volume for state
+    Type: String
+  IpAddress:
+    Default: '123.123.123.123'
+    Description: Floating Ip Address to assign
+    Type: String
+  PrimarySecurityGroup:
+    Default: '9ffaba7d-14ba-4c97-9f8e-fc991b303df3'
+    Description: Primary Security Group
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        Name: {Ref: 'AWS::StackName'}
+        KeyName: {Ref: KeyName}
+        IpAddress: {Ref: IpAddress}
+        VolumeId: {Ref: VolumeId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        InstanceType: m1.tiny
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/Trac/Trac.yaml'
+    Type: AWS::CloudFormation::Stack

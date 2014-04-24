@@ -75,6 +75,7 @@ Resources:
               git: []
               trac: []
               httpd: []
+              mod_ssl: []
               mod_wsgi: []
               trac-git-plugin: []
     Properties:
@@ -143,6 +144,9 @@ Resources:
             - "mv -f /tmp/deploy/* /srv/trac\n"
             - "export NAME=`grep '^name[ ]*=' /srv/trac/conf/trac.ini | sed 's/^name[ ]*=[ ]*//'`\n"
             - "cat > /etc/httpd/conf.d/trac.conf << EOF\n"
+            - "RewriteEngine On\n"
+            - "RewriteCond %{HTTPS} !=on\n"
+            - "RewriteRule ^/?(.*) https://%{SERVER_NAME}/\\$1 [R,L]\n"
             - "RedirectMatch ^/$ /trac/\n"
             - "Alias /trac/chrome/common /srv/trac/htdocs/common\n"
             - "Alias /trac/chrome/site /srv/trac/htdocs/site\n"
@@ -181,9 +185,20 @@ Resources:
             - "Require valid-user\n"
             - "EOF\n"
             - "fi\n"
+            - "mkdir -p /srv/certs\n"
+            - "if [ -n /srv/certs/localhost.key ]; then\n"
+            - "   mv /etc/pki/tls/private/localhost.key /srv/certs/localhost.key\n"
+            - "fi\n"
+            - "if [ -n /srv/certs/localhost.crt ]; then\n"
+            - "   mv /etc/pki/tls/certs/localhost.crt /srv/certs/localhost.crt\n"
+            - "fi\n"
+            - "rm -f /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key\n"
+            - "ln -s /srv/certs/localhost.key /etc/pki/tls/private/localhost.key\n"
+            - "ln -s /srv/certs/localhost.crt /etc/pki/tls/certs/localhost.crt\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"
+            - "chkconfig httpd on\n"
             - "service httpd start\n"
             - "## CloudFormation signal that setup is complete\n"
             - "/opt/aws/bin/cfn-signal -e 0 -r \"Server setup complete\" '"
