@@ -42,6 +42,7 @@ Resources:
           packages:
             yum:
               mdadm: []
+              lvm2: []
     Properties:
       availability_zone: {Ref: InstanceZone}
       image: {Ref: Image}
