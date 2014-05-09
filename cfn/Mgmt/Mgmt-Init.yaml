@@ -19,7 +19,7 @@ Parameters:
   InstanceZone: {Default: 'nova', Description: AvailabilityZone for
       this instance, Type: String}
   Flavor:
-    Default: t1.tiny
+    Default: m1.tiny
     Description: Flavor to boot
     Type: String
   Image:
