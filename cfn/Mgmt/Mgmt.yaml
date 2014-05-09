@@ -1,17 +1,5 @@
 HeatTemplateFormatVersion: '2012-12-12'
 Description: Management Server
-Mappings:
-  AWSInstanceType2Arch:
-    m1.tiny: {Arch: '64'}
-    k1.tiny: {Arch: '64'}
-  DistroArch2AMI:
-    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
-    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
-    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
-    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
-    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
-    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
-    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
 Outputs:
   Name:
     Description: public DNS name of Instance
@@ -35,15 +23,13 @@ Parameters:
       UserData script, Type: String}
   InstanceZone: {Default: 'nova', Description: AvailabilityZone for
       this instance, Type: String}
-  InstanceType:
-    AllowedValues: [m1.tiny, k1.tiny]
+  Flavor:
     Default: m1.tiny
-    Description: EC2 instance type (e.g. m1.tiny, k1.tiny)
+    Description: Flavor to boot
     Type: String
-  LinuxDistribution:
-    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
-    Default: SL6
-    Description: Distribution of choice
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
     Type: String
   StartupTimeout: {Default: '1700', Description: How
       long to wait on node coming up, Type: Number}
@@ -74,15 +60,8 @@ Resources:
           - ''
           - - {Ref: Name}
       availability_zone: {Ref: InstanceZone}
-      image:
-        Fn::FindInMap:
-        - DistroArch2AMI
-        - {Ref: LinuxDistribution}
-        - Fn::FindInMap:
-          - AWSInstanceType2Arch
-          - {Ref: InstanceType}
-          - Arch
-      flavor: {Ref: InstanceType}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
       key_name: {Ref: KeyName}
       networks:
         - {port: {Ref: PrimaryInterface}}
