@@ -18,11 +18,6 @@ Parameters:
       UserData script, Type: String}
   InstanceZone: {Default: 'nova', Description: AvailabilityZone for
       this instance, Type: String}
-  InstanceType:
-    AllowedValues: [m1.tiny, k1.tiny]
-    Default: m1.tiny
-    Description: EC2 instance type (e.g. m1.tiny, k1.tiny)
-    Type: String
   Flavor:
     Default: t1.tiny
     Description: Flavor to boot
