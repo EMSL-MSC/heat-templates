@@ -112,6 +112,7 @@ Resources:
             - "LV_NAME=$NAME-data\n"
             - "DEVICE=/dev/vdb1\n"
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" ]; then\n" 
+            - "  yum install -y cryptsetup-luks\n"
             - "  echo -n \""
             - {Ref: LuksPassword}
             - "\" > /tmp/key\n"

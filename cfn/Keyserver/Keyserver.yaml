@@ -56,7 +56,9 @@ Resources:
         config:
           packages:
             yum:
+              cryptsetup-luks: []
               mdadm: []
+              lvm2: []
     Properties:
       name:
         Fn::Join:
