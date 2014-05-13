@@ -110,7 +110,7 @@ Resources:
             - "dd if=/dev/zero of=/dev/vdb1 bs=512 count=1\n"
             - "VG_NAME=$NAME-vg0\n"
             - "LV_NAME=$NAME-data\n"
-            - "DEVICE=/dev/sdb1\n"
+            - "DEVICE=/dev/vdb1\n"
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" ]; then\n" 
             - "  echo \""
             - {Ref: LuksPassword}
