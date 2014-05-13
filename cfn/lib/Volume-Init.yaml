@@ -1,0 +1,169 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create State Volume
+Outputs:
+  Name:
+    Description: public DNS name of Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+Parameters:
+  Name: {Description: Name for the volume, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  Flavor:
+    Default: m1.tiny
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+  VolumeSize: {Default: '1', Description: Volume
+      size for each EBS volume, Type: Number}
+  VolumeContainer:
+    AllowedValues: [lvm, lvmenc, raw, user]
+    Default: lvm
+    Description: What type of container to use
+    Type: String
+  VolumeFormat:
+    AllowedValues: [ext2, ext3, ext4, xfs]
+    Default: ext4
+    Description: How to format the volume
+    Type: String
+  LuksPassword:
+    Default: ""
+    NoEcho: 'true'
+    Description: luks password to use if you are using luks
+    Type: String
+Resources:
+  PrimaryInterface:
+    Properties:
+      network_id: {Ref: PrimaryNetworkId}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              mdadm: []
+              lvm2: []
+    Properties:
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "## Waiting for EBS mounts to become available\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "NAME="
+            - {Ref: Name}
+            - "\n"
+            - "VOLUME_CONTAINER="
+            - {Ref: VolumeContainer}
+            - "\n"
+            - "VOLUMEFORMAT="
+            - {Ref: VolumeFormat}
+            - "\n"
+            - "if [ $VOLUME_CONTAINER != \"user\" ]; then"
+            - "(echo mklabel msdos; echo mkpart primary ext2 0 -1;"
+            - "echo print; echo quit) | parted -a optimal /dev/vdb\n"
+            - "blockdev --setra 128 /dev/vdb\n"
+            - "## Create physical and logical volumes\n"
+            - "dd if=/dev/zero of=/dev/vdb1 bs=512 count=1\n"
+            - "VG_NAME=$NAME-vg0\n"
+            - "LV_NAME=$NAME-data\n"
+            - "DEVICE=/dev/sdb1\n"
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" ]; then\n" 
+            - "  echo \""
+            - {Ref: LuksPassword}
+            - "\"\n > /tmp/key\n"
+            - "  cryptsetup --key-file /tmp/key LuksFormat $DEVICE\n"
+            - "  cryptsetup --key-file /tmp/key luksOpen $DEVICE $NANE"
+            - "  rm -f /tmp/key\n"
+            - "  DEVICE=/dev/mapper/$NAME\n"
+            - "fi\n"
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
+            - "  pvcreate $DEVICE\n"
+            - "  vgcreate $VG_NAME $DEVICE\n"
+            - "  lvcreate -l 100%vg -n $LV_NAME $VG_NAME\n"
+            - "fi\n"
+            - "## Create filesystems and mount point info\n"
+            - "if [ $VOLUMEFORMAT = \"xfs\" ] then\n"
+            - "  mkfs.xfs -f /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
+            - "else\n"
+            - "  mke2fs -t $VOLUMEFORMAT -F /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
+            - "fi\n"
+            - "mount /dev/$VG_NAME/$LV_NAME /srv\n"
+            - "fi #end of VOLUME_CONTAINER !user\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "if [ $VOLUME_CONTAINER != \"user\" ]; then"
+            - "umount /srv\n"
+            - "fi\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+    Type: OS::Nova::Server
+  Volume:
+    Properties:
+      name: {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      size: {Ref: VolumeSize}
+    Type: OS::Cinder::Volume
+    DeletionPolicy: Retain
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: Volume}
+    Type: AWS::EC2::VolumeAttachment
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
