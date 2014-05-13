@@ -2,7 +2,7 @@ HeatTemplateFormatVersion: '2012-12-12'
 Description: Management Server Create Volumes
 Outputs:
   Name:
-    Description: public DNS name of Incance
+    Description: public DNS name of Instance
     Value:
       Fn::Select:
       - ip_address
