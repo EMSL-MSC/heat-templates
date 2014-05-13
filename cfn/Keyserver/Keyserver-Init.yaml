@@ -49,21 +49,7 @@ Resources:
         VolumeContainer: lvmenc
         VolumeFormat: ext4
         LuksPassword: {Ref: LuksPassword}
-        ExtraUserData:
-          Fn::Base64:
-            Fn::Join:
-            - ''
-            - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
-              - "    /etc/init.d/sshd start\n"
-              - "fi\n"
-              - "mkdir -p /srv/etc\n"
-              - "mkdir -p /srv/home\n"
-              - "cp -a /etc/ssh /srv/etc\n"
-              - "mkdir -p /srv/root/.ssh/\n"
-              - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
-              - "## Extra userdata\n"
-              - {Ref: ExtraUserData}
-              - "\n"
+        ExtraUserData: {Ref: ExtraUserData}
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
 
