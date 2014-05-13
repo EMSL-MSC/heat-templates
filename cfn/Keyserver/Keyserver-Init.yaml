@@ -1,0 +1,69 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Key Server Create Volumes
+Outputs:
+  Name:
+    Description: public DNS name of Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+Parameters:
+  Name: {Default: 'Keyserver', Description: Name for the volume, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  Flavor:
+    Default: m1.tiny
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+  VolumeSize: {Default: '1', Description: Volume
+      size for each EBS volume, Type: Number}
+  LuksPassword:
+    NoEcho: 'true'
+    Description: luks password to use if you are using luks
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        Name: {Ref: Name}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        KeyName: {Ref: KeyName}
+        InstanceZone: {Ref: InstanceZone}
+        Flavor: {Ref: Flavor}
+        Image: {Ref: Image}
+        StartupTimeout: {Ref: StartupTimeout}
+        VolumeSize: {Ref: VolumeSize}
+        VolumeContainer: lvmenc
+        VolumeFormat: ext4
+        LuksPassword: {Ref: LuksPassword}
+        ExtraUserData:
+          Fn::Base64:
+            Fn::Join:
+            - ''
+            - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
+              - "    /etc/init.d/sshd start\n"
+              - "fi\n"
+              - "mkdir -p /srv/etc\n"
+              - "mkdir -p /srv/home\n"
+              - "cp -a /etc/ssh /srv/etc\n"
+              - "mkdir -p /srv/root/.ssh/\n"
+              - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
+              - "## Extra userdata\n"
+              - {Ref: ExtraUserData}
+              - "\n"
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
+    Type: AWS::CloudFormation::Stack
+

@@ -1,0 +1,146 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Key Server
+Outputs:
+  Name:
+    Description: public DNS name of Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+  Id:
+    Description: Instance Id
+    Value:
+      Ref: Instance
+Parameters:
+  IpAddress: {Description: Floating Ip Address to assign, Type: String}
+  VolumeId: {Description: Volume where data lives, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  Flavor:
+    Default: m1.tiny
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+  Name: 
+    Description: Name of services in the stack
+    Default: Mgmt
+    Type: String
+  KeyserverRepo: 
+    Description: Yum repo where the keyserver lives.
+    Type: String
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              mdadm: []
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "cat > /etc/yum.repos.d/keyserver.repo << EOF\n"
+            - "[keyserverrepo]\n"
+            - "name=keyserver repo\n"
+            - "baseurl="
+            - {Ref: KeyserverRepo}
+            - "\n"
+            - "failovermethod=priority\n"
+            - "enabled=1\n"
+            - "gpgcheck=0\n"
+            - "EOF\n"
+            - "NAME="
+            - {Ref: Name}
+            - "\n"
+            - "echo "$NAME /dev/vdb1 | tee -a /etc/crypttab\n"
+            - "echo '/dev/$NAME-vg0/$NAME-data /srv auto defaults,auto,noatime,noexec 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
+            - {Ref: WaitHandleInstance}
+            - "'\n"
+            - "reboot\n"
+    Type: OS::Nova::Server
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: PrimaryNetworkId
+      InstanceId:
+        Ref: Instance
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
