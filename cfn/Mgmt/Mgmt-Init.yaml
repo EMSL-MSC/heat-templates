@@ -31,101 +31,34 @@ Parameters:
   VolumeSize: {Default: '1', Description: Volume
       size for each EBS volume, Type: Number}
 Resources:
-  PrimaryInterface:
-    Properties:
-      network_id: {Ref: PrimaryNetworkId}
-    Type: OS::Neutron::Port
   Instance:
-    Metadata:
-      AWS::CloudFormation::Init:
-        config:
-          packages:
-            yum:
-              mdadm: []
-              lvm2: []
     Properties:
-      availability_zone: {Ref: InstanceZone}
-      image: {Ref: Image}
-      flavor: {Ref: Flavor}
-      key_name: {Ref: KeyName}
-      networks:
-        - {port: {Ref: PrimaryInterface}}
-      user_data:
-        Fn::Base64:
-          Fn::Join:
-          - ''
-          - - "#!/bin/bash\n"
-            - "yum update -y aws-cfn-bootstrap\n"
-            - "## Error reporting helper function\n"
-            - "function error_exit\n"
-            - "{\n"
-            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
-            - {Ref: WaitHandleInstance}
-            - "'\n"
-            - "   exit 1\n"
-            - "}\n"
-            - "function trap_error\n"
-            - "{\n"
-            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
-            - "}\n"
-            - "set -eu\n"
-            - "trap 'trap_error \"$?\"' ERR\n"
-            - "## Initialize CloudFormation bits\n"
-            - "/opt/aws/bin/cfn-init -s "
-            - {Ref: "AWS::StackName"}
-            - " -r Instance --region "
-            - {Ref: "AWS::Region"}
-            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
-            - "## Waiting for EBS mounts to become available\n"
-            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
-            - "(echo mklabel msdos; echo mkpart primary ext2 0 -1;"
-            - "echo print; echo quit) | parted -a optimal /dev/vdb\n"
-            - "blockdev --setra 128 /dev/vdb\n"
-            - "## Create physical and logical volumes\n"
-            - "dd if=/dev/zero of=/dev/vdb1 bs=512 count=1\n"
-            - "pvcreate /dev/vdb1\n"
-            - "vgcreate mgmt-vg0 /dev/vdb1\n"
-            - "lvcreate -l 100%vg -n mgmt-data mgmt-vg0\n"
-            - "## Create filesystems and mount point info\n"
-            - "mke2fs -t ext4 -F /dev/mgmt-vg0/mgmt-data > /tmp/mke2fs1.log 2>&1\n"
-            - "mount /dev/mgmt-vg0/mgmt-data /srv\n"
-            - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
-            - "    /etc/init.d/sshd start\n"
-            - "fi\n"
-            - "mkdir -p /srv/etc\n"
-            - "mkdir -p /srv/home\n"
-            - "cp -a /etc/ssh /srv/etc\n"
-            - "mkdir -p /srv/root/.ssh/\n"
-            - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
-            - "## Extra userdata\n"
-            - {Ref: ExtraUserData}
-            - "\n"
-            - "umount /srv\n"
-            - "## CloudFormation signal that setup is complete\n"
-            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
-            - {Ref: WaitHandleInstance}
-            - "'\n"
-    Type: OS::Nova::Server
-  Volume:
-    Properties:
-      name: {Ref: Name}
-      availability_zone: {Ref: InstanceZone}
-      size: {Ref: VolumeSize}
-    Type: OS::Cinder::Volume
-    DeletionPolicy: Retain
-  VolumeMount:
-    Properties:
-      Device: /dev/vdb
-      InstanceId: {Ref: Instance}
-      VolumeId: {Ref: Volume}
-    Type: AWS::EC2::VolumeAttachment
-  WaitConditionInstance:
-    DependsOn: Instance
-    Properties:
-      Handle: {Ref: WaitHandleInstance}
-      Timeout: {Ref: StartupTimeout}
-    Type: AWS::CloudFormation::WaitCondition
-  WaitHandleInstance:
-    Properties: {}
-    Type: AWS::CloudFormation::WaitConditionHandle
+      Parameters:
+        Name: {Ref: Name}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        KeyName: {Ref: KeyName}
+        InstanceZone: {Ref: InstanceZone}
+        Flavor: {Ref: Flavor}
+        Image: {Ref: Image}
+        StartupTimeout: {Ref: StartupTimeout}
+        VolumeSize: {Ref: VolumeSize}
+        VolumeContainer: lvm
+        VolumeFormat: ext4
+        ExtraUserData:
+          Fn::Base64:
+            Fn::Join:
+            - ''
+            - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
+              - "    /etc/init.d/sshd start\n"
+              - "fi\n"
+              - "mkdir -p /srv/etc\n"
+              - "mkdir -p /srv/home\n"
+              - "cp -a /etc/ssh /srv/etc\n"
+              - "mkdir -p /srv/root/.ssh/\n"
+              - "ssh-keygen -N '' -f /srv/root/.ssh/id_rsa\n"
+              - "## Extra userdata\n"
+              - {Ref: ExtraUserData}
+              - "\n"
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
+    Type: AWS::CloudFormation::Stack
 

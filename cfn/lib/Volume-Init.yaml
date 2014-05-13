@@ -126,7 +126,7 @@ Resources:
             - "  lvcreate -l 100%vg -n $LV_NAME $VG_NAME\n"
             - "fi\n"
             - "## Create filesystems and mount point info\n"
-            - "if [ $VOLUMEFORMAT = \"xfs\" ] then\n"
+            - "if [ $VOLUMEFORMAT = \"xfs\" ]; then\n"
             - "  mkfs.xfs -f /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
             - "else\n"
             - "  mke2fs -t $VOLUMEFORMAT -F /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
@@ -136,7 +136,7 @@ Resources:
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"
-            - "if [ $VOLUME_CONTAINER != \"user\" ]; then"
+            - "if [ $VOLUME_CONTAINER != \"user\" ]; then\n"
             - "umount /srv\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
