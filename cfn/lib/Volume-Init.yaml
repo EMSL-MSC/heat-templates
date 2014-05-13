@@ -112,9 +112,9 @@ Resources:
             - "LV_NAME=$NAME-data\n"
             - "DEVICE=/dev/vdb1\n"
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" ]; then\n" 
-            - "  echo \""
+            - "  echo -n \""
             - {Ref: LuksPassword}
-            - "\"\n > /tmp/key\n"
+            - "\" > /tmp/key\n"
             - "  cryptsetup --key-file /tmp/key luksFormat $DEVICE\n"
             - "  cryptsetup --key-file /tmp/key luksOpen $DEVICE $NAME\n"
             - "  rm -f /tmp/key\n"
