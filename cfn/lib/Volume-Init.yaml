@@ -116,7 +116,7 @@ Resources:
             - {Ref: LuksPassword}
             - "\"\n > /tmp/key\n"
             - "  cryptsetup --key-file /tmp/key luksFormat $DEVICE\n"
-            - "  cryptsetup --key-file /tmp/key luksOpen $DEVICE $NANE"
+            - "  cryptsetup --key-file /tmp/key luksOpen $DEVICE $NAME\n"
             - "  rm -f /tmp/key\n"
             - "  DEVICE=/dev/mapper/$NAME\n"
             - "fi\n"
