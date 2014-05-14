@@ -37,6 +37,9 @@ Parameters:
     Description: Name of services in the stack
     Default: Mgmt
     Type: String
+  EpelRepo: 
+    Description: Yum repo for epel.
+    Type: String
   KeyserverRepo: 
     Description: Yum repo where the keyserver lives.
     Type: String
@@ -106,12 +109,27 @@ Resources:
             - "enabled=1\n"
             - "gpgcheck=0\n"
             - "EOF\n"
+            - "EPELREPO="
+            - {Ref: EpelRepo}
+            - "\n"
+            - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
+            - "  cat > /etc/yum.repos.d/epel.repo << EOF\n"
+            - "[epel]\n"
+            - "name=epel repo\n"
+            - "baseurl="
+            - {Ref: EpelRepo}
+            - "\n"
+            - "failovermethod=priority\n"
+            - "enabled=1\n"
+            - "gpgcheck=0\n"
+            - "EOF\n"
             - "NAME="
             - {Ref: Name}
             - "\n"
             - "echo \"$NAME\" /dev/vdb1 | tee -a /etc/crypttab\n"
             - "echo '/dev/$NAME-vg0/$NAME-data /srv auto defaults,auto,noatime,noexec 0 0'"
             - " | tee -a /etc/fstab\n"
+            - "yum install -y msc-keyserver\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"
