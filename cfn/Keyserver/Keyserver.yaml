@@ -123,6 +123,7 @@ Resources:
             - "enabled=1\n"
             - "gpgcheck=0\n"
             - "EOF\n"
+            - "fi\n"
             - "NAME="
             - {Ref: Name}
             - "\n"
