@@ -128,7 +128,7 @@ Resources:
             - {Ref: Name}
             - "\n"
             - "echo \"$NAME\" /dev/vdb1 | tee -a /etc/crypttab\n"
-            - "echo '/dev/$NAME-vg0/$NAME-data /srv auto defaults,auto,noatime,noexec 0 0'"
+            - "echo \"/dev/$NAME-vg0/$NAME-data /srv auto defaults,auto,noatime,noexec 0 0\""
             - " | tee -a /etc/fstab\n"
             - "yum install -y msc-keyserver\n"
             - "## Extra userdata\n"
