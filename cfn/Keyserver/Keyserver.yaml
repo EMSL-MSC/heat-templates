@@ -132,7 +132,7 @@ Resources:
             - " | tee -a /etc/fstab\n"
             - "yum install -y msc-keyserver\n"
             - "chkconfig httpd off\n"
-            - "cat > /etc/rc.firstboot <<\"EOF\"]n"
+            - "cat > /etc/rc.firstboot <<\"EOF\"\n"
             - "if [ ! -f /srv/msckeys/etc/msckeys ]; then\n"
             - "  sed 's:@AUTH_KEY_CHANGEME@:'`dd if=/dev/random bs=1 count=9|base64`':' /etc/msckeys > /srv/msckeys/etc/msckeys\n"
             - "fi\n"
