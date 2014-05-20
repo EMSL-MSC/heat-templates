@@ -131,6 +131,7 @@ Resources:
             - "echo \"/dev/$NAME-vg0/$NAME-data /srv auto defaults,auto,noatime,noexec 0 0\""
             - " | tee -a /etc/fstab\n"
             - "yum install -y msc-keyserver\n"
+            - "chkconfig httpd on\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"

@@ -49,7 +49,20 @@ Resources:
         VolumeContainer: lvmenc
         VolumeFormat: ext4
         LuksPassword: {Ref: LuksPassword}
-        ExtraUserData: {Ref: ExtraUserData}
+        ExtraUserData:
+          Fn::Join:
+          - ''
+          - - "yum install -y httpd\n"
+            - "mkdir -p /srv/msckeys/etc\n"
+            - "ln -s /srv/msckeys/etc/msc-server-key.pub /etc/\n"
+            - "ln -s /srv/msckeys/etc/msc-server-key.pem /etc/\n"
+            - "ln -s /srv/msckeys/etc/msc-trusted-key.pub /etc/\n"
+            - "ln -s /srv/msckeys/etc/msc-trusted-key.pem /etc/\n"
+            - "mkdir -p /srv/www-msckeys/data/cluster\n"
+            - "mkdir -p /srv/www-msckeys/data/public\n"
+            - "mkdir -p /srv/www-msckeys/data/host\n"
+            - "chown --recursive apache.apache /srv/www-msckeys\n"
+            - {Ref: ExtraUserData}
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
 
