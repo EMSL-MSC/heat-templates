@@ -53,11 +53,7 @@ Resources:
           Fn::Join:
           - ''
           - - "yum install -y httpd\n"
-            - "mkdir -p /srv/msckeys/etc\n"
-            - "ln -s /srv/msckeys/etc/msc-server-key.pub /etc/\n"
-            - "ln -s /srv/msckeys/etc/msc-server-key.pem /etc/\n"
-            - "ln -s /srv/msckeys/etc/msc-trusted-key.pub /etc/\n"
-            - "ln -s /srv/msckeys/etc/msc-trusted-key.pem /etc/\n"
+            - "mkdir -p /srv/config\n"
             - "mkdir -p /srv/www-msckeys/data/cluster\n"
             - "mkdir -p /srv/www-msckeys/data/public\n"
             - "mkdir -p /srv/www-msckeys/data/host\n"
