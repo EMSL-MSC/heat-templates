@@ -54,6 +54,10 @@ Resources:
           - ''
           - - "yum install -y httpd\n"
             - "mkdir -p /srv/config\n"
+            - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
+            - "    /etc/init.d/sshd start\n"
+            - "fi\n"
+            - "cp -a /etc/ssh /srv/config\n"
             - "mkdir -p /srv/www-msckeys/data/cluster\n"
             - "mkdir -p /srv/www-msckeys/data/public\n"
             - "mkdir -p /srv/www-msckeys/data/host\n"

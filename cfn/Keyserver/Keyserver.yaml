@@ -168,6 +168,8 @@ Resources:
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"
+            - "mv /etc/ssh /etc/ssh.orig\n"
+            - "ln -s /srv/config/ssh /etc/ssh\n"
             - "## CloudFormation signal that setup is complete\n"
             - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
             - {Ref: WaitHandleInstance}
