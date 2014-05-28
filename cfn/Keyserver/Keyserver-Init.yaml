@@ -46,7 +46,7 @@ Resources:
         Image: {Ref: Image}
         StartupTimeout: {Ref: StartupTimeout}
         VolumeSize: {Ref: VolumeSize}
-        VolumeContainer: lvmenc
+        VolumeContainer: enc
         VolumeFormat: ext4
         LuksPassword: {Ref: LuksPassword}
         ExtraUserData:
