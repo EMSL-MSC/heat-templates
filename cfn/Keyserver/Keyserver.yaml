@@ -132,7 +132,8 @@ Resources:
             - "NAME="
             - {Ref: Name}
             - "\n"
-            - "echo \"$NAME\" /dev/vdb1 | tee -a /etc/crypttab\n"
+            - "DEVICE=`blkid | grep crypto_LUKS | head -n 1 | awk -F: '{print $1}'`\n"
+            - "echo \"$NAME\" $DEVICE | tee -a /etc/crypttab\n"
             - "echo \"/dev/mapper/$NAME /srv auto defaults,auto,noatime,noexec 0 0\""
             - " | tee -a /etc/fstab\n"
             - "yum install -y msc-keyserver crudini\n"
