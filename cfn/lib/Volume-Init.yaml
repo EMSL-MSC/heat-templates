@@ -31,7 +31,7 @@ Parameters:
   VolumeSize: {Default: '1', Description: Volume
       size for each EBS volume, Type: Number}
   VolumeContainer:
-    AllowedValues: [lvm, lvmenc, raw, user]
+    AllowedValues: [lvm, lvmenc, enc, raw, user]
     Default: lvm
     Description: What type of container to use
     Type: String
@@ -111,7 +111,8 @@ Resources:
             - "VG_NAME=$NAME-vg0\n"
             - "LV_NAME=$NAME-data\n"
             - "DEVICE=/dev/vdb1\n"
-            - "if [ $VOLUME_CONTAINER = \"lvmenc\" ]; then\n" 
+            - "SUBDEVICE=$DEVICE\n"
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" or $VOLUME_CONTAINER = \"enc\" ]; then\n" 
             - "  yum install -y cryptsetup-luks\n"
             - "  echo -n \""
             - {Ref: LuksPassword}
@@ -120,20 +121,22 @@ Resources:
             - "  cryptsetup --key-file /tmp/key luksOpen $DEVICE $NAME\n"
             - "  rm -f /tmp/key\n"
             - "  DEVICE=/dev/mapper/$NAME\n"
+            - "  SUBDEVICE=$DEVICE\n"
             - "fi\n"
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
             - "  pvcreate $DEVICE\n"
             - "  vgcreate $VG_NAME $DEVICE\n"
             - "  lvcreate -l 100%vg -n $LV_NAME $VG_NAME\n"
+            - "  SUBDEVICE=/dev/$VG_NAME/$LV_NAME
             - "fi\n"
             - "## Create filesystems and mount point info\n"
             - "if [ $VOLUMEFORMAT = \"xfs\" ]; then\n"
             - "  yum install -y xfsprogs\n"
-            - "  mkfs.xfs -f /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
+            - "  mkfs.xfs -f $SUBDEVICE >> /tmp/mkfs.log 2>&1\n"
             - "else\n"
-            - "  mke2fs -t $VOLUMEFORMAT -F /dev/$VG_NAME/$LV_NAME >> /tmp/mkfs.log 2>&1\n"
+            - "  mke2fs -t $VOLUMEFORMAT -F $SUBDEVICE >> /tmp/mkfs.log 2>&1\n"
             - "fi\n"
-            - "mount /dev/$VG_NAME/$LV_NAME /srv\n"
+            - "mount $SUBDEVICE /srv\n"
             - "fi #end of VOLUME_CONTAINER !user\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
@@ -144,7 +147,7 @@ Resources:
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
             - "  vgchange -a n $VG_NAME\n"
             - "fi\n"
-            - "if [ $VOLUME_CONTAINER != \"luksenc\" ]; then\n"
+            - "if [ $VOLUME_CONTAINER = \"luksenc\" -o $VOLUME_CONTAINER = \"enc\"]; then\n"
             - "  cryptsetup luksClose $NAME\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
