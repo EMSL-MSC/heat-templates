@@ -102,6 +102,9 @@ Resources:
             - "KEYSERVERREPO="
             - {Ref: KeyserverRepo}
             - "\n"
+            - "EPELREPO="
+            - {Ref: EpelRepo}
+            - "\n"
             - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
             - "  cat > /etc/yum.repos.d/keyserver.repo << EOF\n"
             - "[keyserverrepo]\n"
@@ -114,9 +117,6 @@ Resources:
             - "gpgcheck=0\n"
             - "EOF\n"
             - "fi\n"
-            - "EPELREPO="
-            - {Ref: EpelRepo}
-            - "\n"
             - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
             - "  cat > /etc/yum.repos.d/epel.repo << EOF\n"
             - "[epel]\n"
