@@ -171,6 +171,7 @@ Resources:
             - "\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
             - "ln -s /srv/config/ssh /etc/ssh\n"
+            - "sed 's/\\(console=tty0\\)[ ]*\(.*\\)[ ]*\\(console=ttyS0,115200\\)/\\2 \\3 \\1/' /boot/syslinux/syslinux.cfg\n"
             - "## CloudFormation signal that setup is complete\n"
             - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
             - {Ref: WaitHandleInstance}
