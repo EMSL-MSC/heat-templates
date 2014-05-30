@@ -127,7 +127,7 @@ Resources:
             - "  pvcreate $DEVICE\n"
             - "  vgcreate $VG_NAME $DEVICE\n"
             - "  lvcreate -l 100%vg -n $LV_NAME $VG_NAME\n"
-            - "  SUBDEVICE=/dev/$VG_NAME/$LV_NAME
+            - "  SUBDEVICE=/dev/$VG_NAME/$LV_NAME\n"
             - "fi\n"
             - "## Create filesystems and mount point info\n"
             - "if [ $VOLUMEFORMAT = \"xfs\" ]; then\n"
