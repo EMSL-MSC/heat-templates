@@ -44,7 +44,7 @@ Parameters:
     Description: Yum repo where the keyserver lives.
     Type: String
   SecurityGroups: 
-    Default: [web]
+    Default: "[web]"
     Description: Security Groups to add to the instance
     Type: Json
 Resources:
