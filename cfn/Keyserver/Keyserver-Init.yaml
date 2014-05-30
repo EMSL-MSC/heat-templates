@@ -61,6 +61,7 @@ Resources:
             - "mkdir -p /srv/www-msckeys/data/cluster\n"
             - "mkdir -p /srv/www-msckeys/data/public\n"
             - "mkdir -p /srv/www-msckeys/data/host\n"
+            - "mkdir -p /srv/www-msckeys/data/groups\n"
             - "chown --recursive apache.apache /srv/www-msckeys\n"
             - {Ref: ExtraUserData}
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
