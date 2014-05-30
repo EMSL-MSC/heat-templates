@@ -55,6 +55,7 @@ Resources:
           - ''
           - - {Ref: Name}
             - '-PrimaryPort'
+      security_groups: {Ref: SecurityGroups}
       network_id: {Ref: PrimaryNetworkId}
     Type: OS::Neutron::Port
   Instance:
@@ -75,7 +76,6 @@ Resources:
       image: {Ref: Image}
       flavor: {Ref: Flavor}
       key_name: {Ref: KeyName}
-      security_groups: {Ref: SecurityGroups}
       networks:
         - {port: {Ref: PrimaryInterface}}
       user_data:
