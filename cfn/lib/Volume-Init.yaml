@@ -112,7 +112,7 @@ Resources:
             - "LV_NAME=$NAME-data\n"
             - "DEVICE=/dev/vdb1\n"
             - "SUBDEVICE=$DEVICE\n"
-            - "if [ $VOLUME_CONTAINER = \"lvmenc\" or $VOLUME_CONTAINER = \"enc\" ]; then\n" 
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"enc\" ]; then\n" 
             - "  yum install -y cryptsetup-luks\n"
             - "  echo -n \""
             - {Ref: LuksPassword}
@@ -147,7 +147,7 @@ Resources:
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
             - "  vgchange -a n $VG_NAME\n"
             - "fi\n"
-            - "if [ $VOLUME_CONTAINER = \"luksenc\" -o $VOLUME_CONTAINER = \"enc\"]; then\n"
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"enc\"]; then\n"
             - "  cryptsetup luksClose $NAME\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
