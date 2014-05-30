@@ -43,6 +43,10 @@ Parameters:
   KeyserverRepo: 
     Description: Yum repo where the keyserver lives.
     Type: String
+  SecurityGroups: 
+    Default: [web]
+    Description: Security Groups to add to the instance
+    Type: Json
 Resources:
   PrimaryInterface:
     Properties:
@@ -71,6 +75,7 @@ Resources:
       image: {Ref: Image}
       flavor: {Ref: Flavor}
       key_name: {Ref: KeyName}
+      security_groups: {Ref: SecurityGroups}
       networks:
         - {port: {Ref: PrimaryInterface}}
       user_data:
