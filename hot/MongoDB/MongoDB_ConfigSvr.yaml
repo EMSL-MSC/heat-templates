@@ -14,7 +14,7 @@ Mappings:
     RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
     RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
     RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
-    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
+    SL6: {'32': NOT IMPLEMENTED, '64': sl6-msc-image}
     U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
 Outputs:
   ConfigSvrName:
