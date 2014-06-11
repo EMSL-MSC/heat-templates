@@ -22,6 +22,10 @@ Parameters:
     Default: '123.123.123.123'
     Description: Floating Ip Address to assign
     Type: String
+  Image:
+    Default: 'centos-6.5'
+    Description: Image
+    Type: String
   PrimarySecurityGroup:
     Default: '9ffaba7d-14ba-4c97-9f8e-fc991b303df3'
     Description: Primary Security Group
@@ -37,5 +41,6 @@ Resources:
         VolumeId: {Ref: VolumeId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         InstanceType: m1.tiny
+        Image: {Ref: Image}
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/Trac/Trac.yaml'
     Type: AWS::CloudFormation::Stack

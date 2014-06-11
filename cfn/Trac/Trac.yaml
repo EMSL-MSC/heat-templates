@@ -1,21 +1,5 @@
 HeatTemplateFormatVersion: '2012-12-12'
 Description: Trac Server
-Mappings:
-  AWSInstanceType2Arch:
-    m1.large: {Arch: '64'}
-    m1.medium: {Arch: '64'}
-    m1.small: {Arch: '64'}
-    m1.tiny: {Arch: '64'}
-    m1.xlarge: {Arch: '64'}
-    k1.tiny: {Arch: '64'}
-  DistroArch2AMI:
-    F17: {'32': F17-i386-cfntools, '64': F17-x86_64-cfntools}
-    F18: {'32': F18-i386-cfntools, '64': F18-x86_64-cfntools}
-    RHEL-6.1: {'32': rhel61-i386-cfntools, '64': rhel61-x86_64-cfntools}
-    RHEL-6.2: {'32': rhel62-i386-cfntools, '64': rhel62-x86_64-cfntools}
-    RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
-    SL6: {'32': NOT IMPLEMENTED, '64': SL6-base}
-    U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
 Outputs:
   Name:
     Description: public DNS name of the Trac Server
@@ -47,11 +31,7 @@ Parameters:
     Description: AvailabilityZone for this instance
     Type: String
   KeyName: {Description: Name of an existing EC2 KeyPair to enable SSH access, Type: String}
-  LinuxDistribution:
-    AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
-    Default: SL6
-    Description: Distribution of choice
-    Type: String
+  Image: {Description: Image to use, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
   StartupTimeout: {Default: '700', Description: How long to wait on node coming up, Type: Number}
 Resources:
@@ -84,14 +64,7 @@ Resources:
         - ''
         - - {Ref: Name}
       availability_zone: {Ref: InstanceZone}
-      image:
-        Fn::FindInMap:
-        - DistroArch2AMI
-        - {Ref: LinuxDistribution}
-        - Fn::FindInMap:
-          - AWSInstanceType2Arch
-          - {Ref: InstanceType}
-          - Arch
+      image: {Ref: Image}
       flavor: {Ref: InstanceType}
       key_name: {Ref: KeyName}
       networks:
