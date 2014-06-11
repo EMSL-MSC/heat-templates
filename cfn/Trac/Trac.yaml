@@ -21,8 +21,6 @@ Parameters:
   PrimarySecurityGroup: {Description: Primary Security Group, Type: String}
   ExtraUserData: {Default: '', Description: Extra UserData script, Type: String}
   InstanceType:
-    AllowedValues: [m1.tiny, m1.small, m1.large, m1.xlarge, m2.xlarge,
-      m2.2xlarge, m2.4xlarge, c1.xlarge, cc1.4xlarge, k1.tiny]
     Default: m1.tiny
     Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
     Type: String
