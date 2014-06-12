@@ -52,7 +52,6 @@ Resources:
               - "    /etc/init.d/sshd start\n"
               - "fi\n"
               - "mkdir -p /srv/etc\n"
-              - "mkdir -p /srv/home\n"
               - "mkdir -p /srv/trac\n"
               - "mkdir -p /srv/git\n"
               - "git init --bare /srv/git\n"
