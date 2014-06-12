@@ -95,7 +95,10 @@ Resources:
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "/etc/init.d/sshd stop || true \n"
-            - "echo '/dev/trac-vg0/trac-data /srv ext4 defaults,auto,noatime,noexec 0 0'"
+            - "NAME=\""
+            - {Ref: Name}
+            - "\"\n"
+            - "echo '/dev/$NAME-vg0/$NAME-data ext4 defaults,auto,noatime,noexec 0 0'"
             - " | tee -a /etc/fstab\n"
             - "mount /srv\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
