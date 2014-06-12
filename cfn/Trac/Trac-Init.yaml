@@ -54,6 +54,7 @@ Resources:
               - "mkdir -p /srv/etc\n"
               - "mkdir -p /srv/trac\n"
               - "mkdir -p /srv/git\n"
+              - "yum install -y trac git\n"
               - "git init --bare /srv/git\n"
               - "pushd /srv/git; git update-server-info; popd\n"
               - "chown --recursive apache.apache /srv/git\n"
