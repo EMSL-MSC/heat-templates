@@ -99,8 +99,6 @@ Resources:
             - " | tee -a /etc/fstab\n"
             - "mount /srv\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
-            - "rm -rf /home\n"
-            - "ln -s /srv/home /home\n"
             - "ln -s /srv/etc/ssh /etc/ssh\n"
             - "if [ ! -f /srv/root/.ssh/authorized_keys.orig ]; then\n"
             - "    mv /srv/root/.ssh/authorized_keys /srv/root/.ssh/authorized_keys.orig || true\n"
