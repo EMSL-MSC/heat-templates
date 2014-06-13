@@ -32,6 +32,11 @@ Parameters:
   Image: {Description: Image to use, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
   StartupTimeout: {Default: '700', Description: How long to wait on node coming up, Type: Number}
+  GitReadType: 
+    Default: 'anonymous'
+    Description: Must you be authenticated to get to the git repo.
+    AllowedValues: ['anonymous', 'authenticated']
+    Type: String
 Resources:
   PrimaryInterface:
     Properties:
@@ -130,7 +135,8 @@ Resources:
             - "SetEnv GIT_PROJECT_ROOT /srv/git\n"
             - "SetEnv GIT_HTTP_EXPORT_ALL\n"
             - "ScriptAliasMatch ^(/.*?)(\\.git)(/.*)?\\$ /usr/libexec/git-core/git-http-backend/\\$3\n"
-            - "<LocationMatch \"^(/.*?)(\\.git)(/.*)?\\$\">\n"
+            - "ScriptAliasMatch ^/gitauth/(/.*?)(\\.git)(/.*)?\\$ /usr/libexec/git-core/git-http-backend/\\$3\n"
+            - "<LocationMatch \"^/gitauth/.*\\$\">\n"
             - "   include /srv/trac/apache-access.conf\n"
             - "</LocationMatch>\n"
             - "<Directory \"/usr/libexec/git-core\">\n"
@@ -141,6 +147,26 @@ Resources:
             - "<Location /trac/login>\n"
             - "   include /srv/trac/apache-access.conf\n"
             - "</Location>\n"
+            - "EOF\n"
+            - "GIT_READ_TYPE=\""
+            - {Ref: GitReadType}
+            - "\"\n"
+            - "sed -i '/<\\/VirtualHost>/d' /etc/httpd/conf.d/ssl.conf\n"
+            - "cat >> /etc/httpd/conf.d/ssl.conf <<\"EOF\"\n"
+            - "SSLProxyEngine on\n"
+            - "RewriteEngine on\n"
+            - "RewriteCond %{HTTPS} =on\n"
+            - "RewriteCond %{REQUEST_URI} ^/[^/]+[.]git/\n"
+            - "EOF\n"
+            - "if [ $GIT_READ_TYPE = \"anonymous\" ]; then\n"
+            - "   cat >> /etc/httpd/conf.d/ssl.conf <<\"EOF\"\n"
+            - "RewriteCond %{QUERY_STRING} =service=git-receive-pack [OR]\n"
+            - "RewriteCond %{REQUEST_URI} /git-receive-pack$\n"
+            - "EOF\n"
+            - "fi\n"
+            - "cat >> /etc/httpd/conf.d/ssl.conf <<\"EOF\"\n"
+            - "RewriteRule ^/(.*)$ /gitauth/$1 [P]\n"
+            - "</VirtualHost>\n"
             - "EOF\n"
             - "if [ -n /srv/trac/apache-access.conf ]; then\n"
             - "   cat > /srv/trac/apache-access.conf << EOF\n"
