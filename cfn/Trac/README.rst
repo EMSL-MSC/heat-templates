@@ -12,3 +12,24 @@ git clone -c http.sslVerify=false https://<your instance ip>/<your trac name>.gi
 After checking out the repository for the very first time, you must push your first commit like:
 git push --set-upstream origin master
 
+
+-----------------------------------------------------------------------------------------------------------
+Tips and Tricks:
+
+If you do not load a ssl cert into the instance, you may need to work around the self signed cert.
+
+If you are running a git version that supports the -c flag, you can do your initial checkout like:
+git clone -c http.sslVerify=false https://<Trac URL>/<reponame>.git
+
+If your git does not suport the -c flag, do the following:
+GIT_SSL_NO_VERIFY=true git clone https://<Trac URL>/<reponame>.git
+cd <reponame>
+cat >> .git/config <<EOF
+[http] 
+        sslVerify = false
+EOF
+
+
+To download a raw file out of your repo, you can use a url like the following:
+https://<Trac URL>/trac/export/HEAD/<filename>
+
