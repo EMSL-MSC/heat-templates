@@ -168,7 +168,7 @@ Resources:
             - "RewriteRule ^/(.*)$ /gitauth/$1 [P]\n"
             - "</VirtualHost>\n"
             - "EOF\n"
-            - "if [ -n /srv/trac/apache-access.conf ]; then\n"
+            - "if [ ! -f /srv/trac/apache-access.conf ]; then\n"
             - "   cat > /srv/trac/apache-access.conf << EOF\n"
             - "AuthType Basic\n"
             - "AuthName \"Login\"\n"
