@@ -101,7 +101,7 @@ Resources:
               - "[admin]\n"
               - "Port = 9830\n"
               - "ServerAdminID = "
-              - {Ref: AdminUser}
+              - {Ref: AdminUsername}
               - "\n"
               - "ServerAdminPwd = "
               - {Ref: AdminPassword}
