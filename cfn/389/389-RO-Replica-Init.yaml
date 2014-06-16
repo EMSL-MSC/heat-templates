@@ -82,7 +82,7 @@ Resources:
               - {Ref: Domain}
               - "\n"
               - "ConfigDirectoryAdminID = "
-              - {Ref: AdminUser}
+              - {Ref: AdminUsername}
               - "\n"
               - "ConfigDirectoryAdminPwd = "
               - {Ref: AdminPassword}
