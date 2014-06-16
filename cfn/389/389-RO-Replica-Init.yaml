@@ -1,0 +1,156 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: 389 LDAP server Replica Create Volumes
+Parameters:
+  VolumeName: {Description: Name for the volume, Type: String}
+  ShortHostName: {Description: Name for the host, Type: String}
+  Domain: {Description: The domain the server will be in, Type: String}
+  NamingValue: {Description: Naming Value, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  KeyName: {Description: Name of an existing EC2 KeyPair
+      to enable SSH access, Type: String}
+  ExtraUserData: {Default: '', Description: Extra
+      UserData script, Type: String}
+  InstanceZone: {Default: 'nova', Description: AvailabilityZone for
+      this instance, Type: String}
+  Flavor:
+    Default: m1.tiny
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
+    Type: String
+  StartupTimeout: {Default: '1700', Description: How
+      long to wait on node coming up, Type: Number}
+  VolumeSize: {Default: '4', Description: Volume
+      size for each EBS volume, Type: Number}
+  AdminUsername:
+      Default: 'admin'
+      Description: Admin Username
+      Type: String
+  AdminPassword:
+      Description: Admin Password
+      Type: String
+      NoEcho: True
+  RootDN:
+      Default: 'cn=Directory Manager'
+      Description: Root DN Username
+      Type: String
+  RootDNPassword:
+      Description: Root DN Password
+      Type: String
+      NoEcho: True
+  HashedRootDNPassword:
+      Description: Hashed Root DN Password
+      Type: String
+      NoEcho: True
+  ConfigDirectoryLdapURL:
+      Description: Config Directoy LDAP URL
+      Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        Name: {Ref: VolumeName}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        KeyName: {Ref: KeyName}
+        InstanceZone: {Ref: InstanceZone}
+        Flavor: {Ref: Flavor}
+        Image: {Ref: Image}
+        StartupTimeout: {Ref: StartupTimeout}
+        VolumeSize: {Ref: VolumeSize}
+        VolumeContainer: lvm
+        VolumeFormat: ext4
+        ExtraUserData:
+          Fn::Base64:
+            Fn::Join: #FIXME this shouldn't be an init. should probably just be a transient instance.
+            - ''
+            - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
+              - "    /etc/init.d/sshd start\n"
+              - "fi\n"
+              - "yum install -y 389-ds 389-admin xorg-x11-xauth liberation-sans-fonts\n"
+              - "mkdir -p /srv/etc\n"
+              - "mkdir -p /srv/389/etc\n"
+              - "mkdir -p /srv/389/lib\n"
+              - "umount /home || true\n"
+              - "yum install -y trac git\n"
+              - "cp -a /etc/ssh /srv/etc\n"
+              - "mkdir -p /srv/root/.ssh/\n"
+              - "cat > /tmp/389.inf << EOF\n"
+              - "[General]\n"
+              - "AdminDomain = "
+              - {Ref: Domain}
+              - "\n"
+              - "ConfigDirectoryAdminID = "
+              - {Ref: AdminUser}
+              - "\n"
+              - "ConfigDirectoryAdminPwd = "
+              - {Ref: AdminPassword}
+              - "\n"
+              - "ConfigDirectoryLdapURL = "
+              - {Ref: ConfigDirectoryLdapURL}
+              - "\n"
+              - "FullMachineName = "
+              - {Ref: ShortHostName}
+              - "."
+              - {Ref: Domain}
+              - "\n"
+              - "ServerRoot = /usr/lib64/dirsrv\n"
+              - "SuiteSpotGroup = nobody\n"
+              - "SuiteSpotUserID = nobody\n"
+              - "[admin]\n"
+              - "Port = 9830\n"
+              - "ServerAdminID = "
+              - {Ref: AdminUser}
+              - "\n"
+              - "ServerAdminPwd = "
+              - {Ref: AdminPassword}
+              - "\n"
+              - "ServerIpAddress = 0.0.0.0\n"
+              - "SysUser = nobody\n"
+              - "[slapd]\n"
+              - "AddOrgEntries = Yes\n"
+              - "AddSampleEntries = No\n"
+              - "HashedRootDNPwd = "
+              - {Ref: HashedRootDNPassword}
+              - "\n"
+              - "InstallLdifFile = suggest\n"
+              - "RootDN = "
+              - {Ref: RootDN}
+              - "\n"
+              - "RootDNPwd = "
+              - {Ref: RootDNPassword}
+              - "\n"
+              - "ServerIdentifier = "
+              - {Ref: ShortHostName}
+              - "\n"
+              - "ServerPort = 389\n"
+              - "Suffix = dc=emsl,dc=pnl,dc=gov\n"
+              - "UseExistingMC = 1\n"
+              - "bak_dir = /srv/389/lib/slapd/bak\n"
+              - "bindir = /usr/bin\n"
+              - "cert_dir = /srv/389/etc/slapd\n"
+              - "config_dir = /srv/389/etc/slapd\n"
+              - "datadir = /usr/share\n"
+              - "db_dir = /srv/389/lib/slapd/db\n"
+              - "ds_bename = userRoot\n"
+              - "inst_dir = /srv/389/exec/slapd\n"
+              - "ldif_dir = /srv/389/lib/slapd/ldif\n"
+              - "localstatedir = /srv/389\n"
+              - "lock_dir = /srv/389/lock/slapd\n"
+              - "log_dir = /srv/389/log/slapd\n"
+              - "naming_value = "
+              - {Ref: NamingValue}
+              - "\n"
+              - "run_dir = /var/run/dirsrv\n"
+              - "sbindir = /usr/sbin\n"
+              - "schema_dir = /srv/389/etc/slapd/schema\n"
+              - "sysconfdir = /srv/etc\n"
+              - "tmp_dir = /tmp\n"
+              - "EOF\n" #Add bits to set things up, check for replication agreement, add one if not exist. Then bind to master.
+              - "## Extra userdata\n"
+              - {Ref: ExtraUserData}
+              - "\n"
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
+    Type: AWS::CloudFormation::Stack
+
