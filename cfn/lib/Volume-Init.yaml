@@ -54,6 +54,15 @@ Parameters:
     Default: "[\"default\"]"
     Description: Security Groups to add to the instance
     Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to setup a floating ip
+    Type: String
+  FloatingIpAddress:
+    Default: ""
+    Description: The floating ip address you would like to attach
+    Type: String
   BaseURL:
     Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
@@ -71,6 +80,20 @@ Resources:
           - ''
           - - {Ref: BaseURL}
             - "/NeutronPort.yaml"
+    Type: AWS::CloudFormation::Stack
+  Floating-Ip:
+    Properties:
+      Parameters:
+        AssignFloatingIp: {Ref: AssignFloatingIp}
+        InstanceId: {Ref: Instance}
+        NetworkId: {Ref: PrimaryNetworkId}
+        IpAddress: {Ref: FloatingIpAddress}
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/FloatingIp.yaml"
     Type: AWS::CloudFormation::Stack
   Instance:
     Metadata:
