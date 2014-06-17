@@ -1,0 +1,20 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create Neutron Port
+Outputs:
+  PortId:
+    Description: Neutron Port Id
+    Value: {Ref: Interface}
+Parameters:
+  Name:
+    Default: ""
+    Description: Name for the port
+    Type: String
+  PrimaryNetworkId:
+    Description: PrimaryNetworkId
+    Type: String
+Resources:
+  Interface:
+    Properties:
+      name: {Ref: Name}
+      network_id: {Ref: PrimaryNetworkId}
+    Type: OS::Neutron::Port

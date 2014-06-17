@@ -1,0 +1,25 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create Neutron Port
+Outputs:
+  Name:
+    Description: Neutron Port Id
+    Value: {Ref: Interface}
+Parameters:
+  Name:
+    Default: ""
+    Description: Name for the port
+    Type: String
+  PrimaryNetworkId:
+    Description: PrimaryNetworkId
+    Type: String
+  SecurityGroups: 
+    Default: "[\"default\"]"
+    Description: Security Groups to add to the instance
+    Type: Json
+Resources:
+  Interface:
+    Properties:
+      name: {Ref: Name}
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups: {Ref: SecurityGroups}
+    Type: OS::Neutron::Port

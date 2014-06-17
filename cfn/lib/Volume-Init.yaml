@@ -52,9 +52,10 @@ Parameters:
 Resources:
   PrimaryInterface:
     Properties:
-      network_id: {Ref: PrimaryNetworkId}
-      security_groups: {Ref: SecurityGroups}
-    Type: OS::Neutron::Port
+      Parameters:
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/NeutronPort.yaml'
+    Type: AWS::CloudFormation::Stack
   Instance:
     Metadata:
       AWS::CloudFormation::Init:
@@ -69,7 +70,7 @@ Resources:
       flavor: {Ref: Flavor}
       key_name: {Ref: KeyName}
       networks:
-        - {port: {Ref: PrimaryInterface}}
+        - {port: {Fn::GetAtt: [PrimaryInterface, Outputs.PortId]}}
       user_data:
         Fn::Base64:
           Fn::Join:
