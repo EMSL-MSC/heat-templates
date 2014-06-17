@@ -4,7 +4,6 @@ Parameters:
   VolumeName: {Description: Name for the volume, Type: String}
   ShortHostName: {Description: Name for the host, Type: String}
   Domain: {Description: The domain the server will be in, Type: String}
-  NamingValue: {Description: Naming Value, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
       to enable SSH access, Type: String}
@@ -47,7 +46,18 @@ Parameters:
   ConfigDirectoryLdapURL:
       Description: Config Directoy LDAP URL
       Type: String
+  Suffix:
+      Description: The suffix for the ldap server
+      Type: String
+  Server:
+      Description: The full dns name of the server to replicate from.
+      Type: String
 Resources:
+#security group...
+  ReplicationPw:
+    Type: OS::Heat::RandomString
+    Properties:
+      length: 8
   Instance:
     Properties:
       Parameters:
@@ -71,16 +81,31 @@ Resources:
               - "yum install -y 389-ds 389-admin xorg-x11-xauth liberation-sans-fonts\n"
               - "mkdir -p /srv/etc\n"
               - "mkdir -p /srv/389/etc\n"
+              - "mkdir -p /srv/389/usr-lib\n"
               - "mkdir -p /srv/389/lib\n"
               - "umount /home || true\n"
-              - "yum install -y trac git\n"
               - "cp -a /etc/ssh /srv/etc\n"
-              - "mkdir -p /srv/root/.ssh/\n"
-              - "cat > /tmp/389.inf << EOF\n"
+              - "SHORTHN=\""
+              - {Ref: ShortHostName}
+              - "\"\n"
+              - "ROOTDN=\""
+              - {Ref: RootDN}
+              - "\"\n"
+              - "ROOTDNPW=\""
+              - {Ref: RootDNPassword}
+              - "\"\n"
+              - "SUFFIX=\""
+              - {Ref: SUFFIX}
+              - "\"\n"
+              - "DOMAIN=\""
+              - {Ref: DOMAIN}
+              - "\"\n"
+              - "SERVER=\""
+              - {Ref: SERVER}
+              - "\"\n"
+              - "cat > /srv/389/389.inf << EOF\n"
               - "[General]\n"
-              - "AdminDomain = "
-              - {Ref: Domain}
-              - "\n"
+              - "AdminDomain = $DOMAIN\n"
               - "ConfigDirectoryAdminID = "
               - {Ref: AdminUsername}
               - "\n"
@@ -90,11 +115,7 @@ Resources:
               - "ConfigDirectoryLdapURL = "
               - {Ref: ConfigDirectoryLdapURL}
               - "\n"
-              - "FullMachineName = "
-              - {Ref: ShortHostName}
-              - "."
-              - {Ref: Domain}
-              - "\n"
+              - "FullMachineName = $SHORTHN.$DOMAIN\n"
               - "ServerRoot = /usr/lib64/dirsrv\n"
               - "SuiteSpotGroup = nobody\n"
               - "SuiteSpotUserID = nobody\n"
@@ -115,39 +136,89 @@ Resources:
               - {Ref: HashedRootDNPassword}
               - "\n"
               - "InstallLdifFile = suggest\n"
-              - "RootDN = "
-              - {Ref: RootDN}
-              - "\n"
-              - "RootDNPwd = "
-              - {Ref: RootDNPassword}
-              - "\n"
-              - "ServerIdentifier = "
-              - {Ref: ShortHostName}
-              - "\n"
+              - "RootDN = $ROOTDN\n"
+              - "RootDNPwd = $ROOTDNPASSWORD\n"
+              - "ServerIdentifier = $SHORTHN\n"
               - "ServerPort = 389\n"
-              - "Suffix = dc=emsl,dc=pnl,dc=gov\n"
+              - "Suffix = $SUFFIX\n"
               - "UseExistingMC = 1\n"
-              - "bak_dir = /srv/389/lib/slapd/bak\n"
+              - "bak_dir = /var/lib/dirsrv/slapd-$SHORTHN/bak\n"
               - "bindir = /usr/bin\n"
-              - "cert_dir = /srv/389/etc/slapd\n"
-              - "config_dir = /srv/389/etc/slapd\n"
+              - "cert_dir = /etc/dirsrv/slapd-$SHORTHN\n"
+              - "config_dir = /etc/dirsrv/slapd-$SHORTHN\n"
               - "datadir = /usr/share\n"
-              - "db_dir = /srv/389/lib/slapd/db\n"
+              - "db_dir = /var/lib/dirsrv/slapd-$SHORTHN/db\n"
               - "ds_bename = userRoot\n"
-              - "inst_dir = /srv/389/exec/slapd\n"
-              - "ldif_dir = /srv/389/lib/slapd/ldif\n"
-              - "localstatedir = /srv/389\n"
-              - "lock_dir = /srv/389/lock/slapd\n"
-              - "log_dir = /srv/389/log/slapd\n"
-              - "naming_value = "
-              - {Ref: NamingValue}
-              - "\n"
+              - "inst_dir = /usr/lib64/dirsrv/slapd-$SHORTHN\n"
+              - "ldif_dir = /var/lib/dirsrv/slapd-$SHORTHN/ldif\n"
+              - "localstatedir = /var\n"
+              - "lock_dir = /var/lock/dirsrv/slapd-$SHORTHN\n"
+              - "log_dir = /var/log/dirsrv/slapd-$SHORTHN\n"
+              - "naming_value = $SHORTHN\n"
               - "run_dir = /var/run/dirsrv\n"
               - "sbindir = /usr/sbin\n"
-              - "schema_dir = /srv/389/etc/slapd/schema\n"
+              - "schema_dir = /etc/dirsrv/slapd-$SHORTHN/schema\n"
               - "sysconfdir = /srv/etc\n"
               - "tmp_dir = /tmp\n"
-              - "EOF\n" #Add bits to set things up, check for replication agreement, add one if not exist. Then bind to master.
+              - "EOF\n"
+              - "cat > /srv/389/user-setup.sh << EOD\n"
+              - "#!/bin/bash\n"
+              - "ldapmodify -v -h $SHORTHN -a -D \"$ROOTDN\" -w \"$ROOTDNPW\" <<EOF\n"
+              - "dn: cn=replication manager,cn=config\n"
+              - "objectClass: inetorgperson\n"
+              - "objectClass: person\n"
+              - "objectClass: top\n"
+              - "cn: replication manager\n"
+              - "sn: RM\n"
+              - "userPassword: "
+              - {Ref: ReplicationPw}
+              - "\n"
+              - "EOF\n"
+              - "EOD\n"
+              - "cat > /srv/389/slave-setup.sh << EOD\n"
+              - "#!/bin/bash\n"
+              - "ldapmodify -v -h $SHORTHN -p 389 -D \"$ROOTDN\" -w \"$ROOTDNPW\" <<EOF\n"
+              - "dn: cn=replica,cn=\"$SUFFIX\",cn=mapping tree,cn=config\n"
+              - "changetype: add\n"
+              - "objectclass: top\n"
+              - "objectclass: nsds5replica\n"
+              - "objectclass: extensibleObject\n"
+              - "cn: replica\n"
+              - "nsds5replicaroot: $SUFFIX\n"
+              - "nsds5replicatype: 2\n"
+              - "nsds5ReplicaBindDN: cn=replication manager,cn=config\n"
+              - "nsDS5ReplicaId: 0\n"
+              - "nsds5flags: 0\n"
+              - "EOF\n"
+              - "EOD\n"
+              - "cat > /srv/389/master-setup.sh << EOD\n"
+              - "#!/bin/bash\n"
+              - "function bnd {\n"
+              - "	ldapmodify -h $SERVER -D \"$ROOTDN\" -w \"$ROOTDNPW\" -x << EOF\n"
+              - "dn: cn=$SHORTHN replication,cn=replica,cn=\"$SUFFIX\",cn=mapping tree,cn=config\n"
+              - "changetype: add\n"
+              - "objectclass: top\n"
+              - "objectclass: nsds5replicationagreement\n"
+              - "cn: $SHORTHN replication\n"
+              - "nsds5replicahost: $SHORTHN.$DOMAIN\n"
+              - "nsds5replicaport: 389\n"
+              - "nsds5ReplicaBindDN: cn=replication manager,cn=config\n"
+              - "nsds5replicabindmethod: SIMPLE\n"
+              - "nsds5replicaroot: $SUFFIX\n"
+              - "description: agreement between master and $SHORTHN\n"
+              - "nsds5replicacredentials: "
+              - {Ref: ReplicationPw}
+              - "\"\n"
+              - "nsds5BeginReplicaRefresh: start\n"
+              - "EOF\n"
+              - "}\n"
+              - "bnd\n"
+              - "if [ $? -eq 68 ]; then\n"
+              - "	ldapdelete -h $SERVER -D \"$ROOTDN\" -w \"$ROOTDNPW\" \"cn=$SHORTHN replication,cn=replica,cn=\\\"$SUFFIX\\\",cn=mapping tree,cn=config\"\n"
+              - "	bnd\n"
+              - "fi\n"
+              - "exit $?\n"
+              - "EOD\n" #FIXME Start up/setup server....
               - "## Extra userdata\n"
               - {Ref: ExtraUserData}
               - "\n"
