@@ -45,16 +45,37 @@ Parameters:
     NoEcho: 'true'
     Description: luks password to use if you are using luks
     Type: String
+  PortType:
+    AllowedValues: [SG, NSG]
+    Default: NSG
+    Description: Select if you want to specify Security Groups or use the defaults
+    Type: String
   SecurityGroups: 
     Default: "[\"default\"]"
     Description: Security Groups to add to the instance
     Type: Json
+  BaseURL:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+#Needed since security_groups: ["default"] is not the same thing as no security groups. If you are an admin, you may have access to multiple "default" security groups and the former fails.
+Mappings:
+  PortTemplates:
+    SG: {URL: "/NeutronPort_SecurityGroups.yaml"}
+    NSG: {URL: "/NeutronPort.yaml"}
 Resources:
   PrimaryInterface:
     Properties:
       Parameters:
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/NeutronPort.yaml'
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - Fn::FindInMap:
+              - PortTemplates
+              - {Ref: PortType}
+              - URL
     Type: AWS::CloudFormation::Stack
   Instance:
     Metadata:

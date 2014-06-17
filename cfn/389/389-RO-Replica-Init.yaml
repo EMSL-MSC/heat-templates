@@ -52,8 +52,11 @@ Parameters:
   Server:
       Description: The full dns name of the server to replicate from.
       Type: String
+  SecurityGroups:
+      Default: "[\"default\"]"
+      Description: Security groups to assign the instance.
+      Type: String
 Resources:
-#security group...
   ReplicationPw:
     Type: OS::Heat::RandomString
     Properties:
@@ -62,6 +65,7 @@ Resources:
     Properties:
       Parameters:
         Name: {Ref: VolumeName}
+        SecurityGroups: {Ref: SecurityGroups}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         KeyName: {Ref: KeyName}
         InstanceZone: {Ref: InstanceZone}
