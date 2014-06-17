@@ -70,7 +70,8 @@ Resources:
       flavor: {Ref: Flavor}
       key_name: {Ref: KeyName}
       networks:
-        - {port: {Fn::GetAtt: [PrimaryInterface, Outputs.PortId]}}
+        - port:
+            "Fn::GetAtt": [PrimaryInterface, Outputs.PortId]
       user_data:
         Fn::Base64:
           Fn::Join:
