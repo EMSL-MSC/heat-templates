@@ -45,10 +45,15 @@ Parameters:
     NoEcho: 'true'
     Description: luks password to use if you are using luks
     Type: String
+  SecurityGroups: 
+    Default: "[\"default\"]"
+    Description: Security Groups to add to the instance
+    Type: Json
 Resources:
   PrimaryInterface:
     Properties:
       network_id: {Ref: PrimaryNetworkId}
+      security_groups: {Ref: SecurityGroups}
     Type: OS::Neutron::Port
   Instance:
     Metadata:
