@@ -56,6 +56,9 @@ Parameters:
       Default: "[\"default\", \"389\"]"
       Description: Security groups to assign the instance.
       Type: String
+  FloatingIpAddress:
+    Description: The floating ip address for the instance
+    Type: String
 Resources:
   ReplicationPw:
     Type: OS::Heat::RandomString
@@ -76,6 +79,8 @@ Resources:
         VolumeSize: {Ref: VolumeSize}
         VolumeContainer: lvm
         VolumeFormat: ext4
+        AssignFloatingIp: "True"
+        FloatingIpAddress: {Ref: FloatingIpAddress}
         ExtraUserData:
           Fn::Base64:
             Fn::Join: #FIXME this shouldn't be an init. should probably just be a transient instance.
@@ -179,6 +184,7 @@ Resources:
               - {Ref: ReplicationPw}
               - "\n"
               - "EOF\n"
+              - "exit $?\n"
               - "EOD\n"
               - "cat > /srv/389/slave-setup.sh << EOD\n"
               - "#!/bin/bash\n"
@@ -195,6 +201,7 @@ Resources:
               - "nsDS5ReplicaId: 0\n"
               - "nsds5flags: 0\n"
               - "EOF\n"
+              - "exit $?\n"
               - "EOD\n"
               - "cat > /srv/389/master-setup.sh << EOD\n"
               - "#!/bin/bash\n"
@@ -218,14 +225,17 @@ Resources:
               - "EOF\n"
               - "}\n"
               - "bnd\n"
-              - "if [ $? -eq 68 ]; then\n"
+              - "if [ \\$? -eq 68 ]; then\n"
               - "	ldapdelete -h $SERVER -D \"$ROOTDN\" -w \"$ROOTDNPW\" \"cn=$SHORTHN replication,cn=replica,cn=\\\"$SUFFIX\\\",cn=mapping tree,cn=config\"\n"
               - "	bnd\n"
               - "fi\n"
               - "exit $?\n"
               - "EOD\n" #FIXME Start up/setup server....
               - "chmod +x /srv/389/master-setup.sh /srv/389/slave-setup.sh /srv/389/user-setup.sh\n"
-              - "#setup-ds-admin.pl --file /srv/389/389.inf --silent\n"
+              - "setup-ds-admin.pl --file /srv/389/389.inf --silent\n"
+              - "/srv/389/user-setup.sh\n"
+              - "/srv/389/slave-setup.sh\n"
+              - "/srv/389/master-setup.sh\n"
               - "## Extra userdata\n"
               - {Ref: ExtraUserData}
               - "\n"
