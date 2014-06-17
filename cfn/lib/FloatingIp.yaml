@@ -1,0 +1,46 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Floating IP
+Outputs:
+  FloatingIpId:
+    Description: Floating IP ID
+    Value:
+      "Fn::GetAtt": [Interface, Outputs.FloatingIpId]
+Parameters:
+  NetworkId:
+    Description: NetworkId
+    Type: String
+  InstanceId:
+    Description: Id of the instance to attach to.
+    Type: String
+  IpAddress:
+    Description: The floating ip address you would like to attach
+    Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to setup a floating ip
+    Type: String
+  BaseURL:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+Mappings:
+  FloatingIpTemplates:
+    "True": {URL: "/private/FloatingIp_ByIp.yaml"}
+    "False": {URL: "/private/FloatingIp_None.yaml"}
+Resources:
+  Interface:
+    Properties:
+      Parameters:
+        NetworkId: {Ref: NetworkId}
+        IpAddress: {Ref: IpAddress}
+        InstanceId: {Ref: InstanceId}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - Fn::FindInMap:
+              - FloatingIpTemplates
+              - {Ref: AssignFloatingIp}
+              - URL
+    Type: AWS::CloudFormation::Stack

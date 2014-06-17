@@ -1,0 +1,26 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create Floating IP
+Outputs:
+  FloatingIpId:
+    Description: Floating IP ID
+    Value: {Ref: Floating-IP}
+Parameters:
+  NetworkId:
+    Description: NetworkId
+    Type: String
+  InstanceId:
+    Description: Id of the instance to attach to.
+    Type: String
+  IpAddress:
+    Description: The floating ip address you would like to attach
+    Type: String
+Resources:
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: NetworkId
+      InstanceId:
+        Ref: InstanceId
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
