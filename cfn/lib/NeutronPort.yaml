@@ -26,8 +26,8 @@ Parameters:
 #Needed since security_groups: ["default"] is not the same thing as no security groups. If you are an admin, you may have access to multiple "default" security groups and the former fails.
 Mappings:
   PortTemplates:
-    True: {URL: "/NeutronPort_Default.yaml"}
-    False: {URL: "/NeutronPort_SecurityGroups.yaml"}
+    True: {URL: "/private/NeutronPort_Default.yaml"}
+    False: {URL: "/private/NeutronPort_SecurityGroups.yaml"}
 Resources:
   Interface:
     Properties:
