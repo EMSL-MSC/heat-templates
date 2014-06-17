@@ -170,7 +170,7 @@ Resources:
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
             - "  vgchange -a n $VG_NAME\n"
             - "fi\n"
-            - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"enc\"]; then\n"
+            - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"enc\" ]; then\n"
             - "  cryptsetup luksClose $NAME\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
