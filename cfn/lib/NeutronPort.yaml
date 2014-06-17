@@ -12,6 +12,10 @@ Parameters:
   PrimaryNetworkId:
     Description: PrimaryNetworkId
     Type: String
+  SecurityGroups: 
+    Default: ""
+    Description: Security Groups to add to the instance. Ignored
+    Type: Json
 Resources:
   Interface:
     Properties:
