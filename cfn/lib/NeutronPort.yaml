@@ -10,6 +10,9 @@ Parameters:
     Default: ""
     Description: Name for the port
     Type: String
+  NetworkId:
+    Description: NetworkId
+    Type: String
   DefaultSecurityGroups:
     AllowedValues: ["True", "False"]
     Default: "True"
@@ -32,7 +35,7 @@ Resources:
   Interface:
     Properties:
       Parameters:
-        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        NetworkId: {Ref: NetworkId}
         SecurityGroups: {Ref: SecurityGroups}
         Name: {Ref: Name}
       TemplateURL:
