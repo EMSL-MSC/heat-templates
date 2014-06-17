@@ -44,6 +44,6 @@ Resources:
           - - {Ref: BaseURL}
             - Fn::FindInMap:
               - PortTemplates
-              - {Ref: PortType}
+              - {Ref: DefaultSecurityGroups}
               - URL
     Type: AWS::CloudFormation::Stack
