@@ -95,13 +95,13 @@ Resources:
               - {Ref: RootDNPassword}
               - "\"\n"
               - "SUFFIX=\""
-              - {Ref: SUFFIX}
+              - {Ref: Suffix}
               - "\"\n"
               - "DOMAIN=\""
-              - {Ref: DOMAIN}
+              - {Ref: Domain}
               - "\"\n"
               - "SERVER=\""
-              - {Ref: SERVER}
+              - {Ref: Server}
               - "\"\n"
               - "cat > /srv/389/389.inf << EOF\n"
               - "[General]\n"
