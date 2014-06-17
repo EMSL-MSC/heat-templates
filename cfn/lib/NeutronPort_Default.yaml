@@ -13,13 +13,12 @@ Parameters:
     Description: NetworkId
     Type: String
   SecurityGroups: 
-    Default: "[\"default\"]"
-    Description: Security Groups to add to the instance
+    Default: ""
+    Description: Security Groups to add to the instance. Ignored
     Type: Json
 Resources:
   Interface:
     Properties:
       name: {Ref: Name}
       network_id: {Ref: NetworkId}
-      security_groups: {Ref: SecurityGroups}
     Type: OS::Neutron::Port

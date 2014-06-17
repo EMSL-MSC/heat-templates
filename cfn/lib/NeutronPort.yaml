@@ -1,24 +1,46 @@
 HeatTemplateFormatVersion: '2012-12-12'
-Description: Create Neutron Port
+Description: NeutronPort
 Outputs:
   PortId:
-    Description: Neutron Port Id
-    Value: {Ref: Interface}
+    Description: Neutron Port ID
+    Value:
+      "Fn::GetAtt": [Interface, Outputs.PortId]
 Parameters:
   Name:
     Default: ""
     Description: Name for the port
     Type: String
-  PrimaryNetworkId:
-    Description: PrimaryNetworkId
+  DefaultSecurityGroups:
+    AllowedValues: ["True", "False"]
+    Default: "True"
+    Description: Use true to ignore passed Security Groups and just use the default for your network.
     Type: String
   SecurityGroups: 
-    Default: ""
-    Description: Security Groups to add to the instance. Ignored
-    Type: Json
+    Default: "[\"default\"]"
+    Description: Security Groups to add to the instance
+    Type: String
+  BaseURL:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+#Needed since security_groups: ["default"] is not the same thing as no security groups. If you are an admin, you may have access to multiple "default" security groups and the former fails.
+Mappings:
+  PortTemplates:
+    True: {URL: "/NeutronPort_Default.yaml"}
+    False: {URL: "/NeutronPort_SecurityGroups.yaml"}
 Resources:
   Interface:
     Properties:
-      name: {Ref: Name}
-      network_id: {Ref: PrimaryNetworkId}
-    Type: OS::Neutron::Port
+      Parameters:
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        SecurityGroups: {Ref: SecurityGroups}
+        Name: {Ref: Name}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - Fn::FindInMap:
+              - PortTemplates
+              - {Ref: PortType}
+              - URL
+    Type: AWS::CloudFormation::Stack
