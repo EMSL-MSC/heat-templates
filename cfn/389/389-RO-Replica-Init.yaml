@@ -65,7 +65,7 @@ Resources:
     Properties:
       Parameters:
         Name: {Ref: VolumeName}
-        PortType: SG
+        DefaultSecurityGroups: "False"
         SecurityGroups: {Ref: SecurityGroups}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         KeyName: {Ref: KeyName}
