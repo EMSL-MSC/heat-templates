@@ -53,7 +53,7 @@ Parameters:
   SecurityGroups: 
     Default: "[\"default\"]"
     Description: Security Groups to add to the instance
-    Type: Json
+    Type: String
   BaseURL:
     Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
