@@ -53,7 +53,7 @@ Parameters:
       Description: The full dns name of the server to replicate from.
       Type: String
   SecurityGroups:
-      Default: "[\"default\"]"
+      Default: "[\"default\", \"389\"]"
       Description: Security groups to assign the instance.
       Type: String
 Resources:
@@ -65,6 +65,7 @@ Resources:
     Properties:
       Parameters:
         Name: {Ref: VolumeName}
+        PortType: SG
         SecurityGroups: {Ref: SecurityGroups}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         KeyName: {Ref: KeyName}
