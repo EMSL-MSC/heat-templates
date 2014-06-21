@@ -1,0 +1,65 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: 389 Base Cluster
+Parameters:
+  SubnetId:
+    Description: Which subnet to use
+    Type: String
+Outputs:
+  ROServerGroupId:
+    Description: Read Only Server Group ID
+    Value: {Ref: ServerGroup}
+  ROLoadBalancerId:
+    Description: Read Only Load Balancer ID
+    Value: {Ref: ROLoadBalancer}
+  ROLoadBalancerVipAddr:
+    Description: Read Only Load Balancer Ip Address
+    Value:
+      Fn::Select:
+        - address
+        - Fn::GetAtt: [ROLoadBalancer, vip]
+  ROLoadBalancerVipId:
+    Description: Read Only Load Balancer Vip ID
+    Value:
+      Fn::Select:
+        - id
+        - Fn::GetAtt: [ROLoadBalancer, vip]
+  ROLoadBalancerVipPort:
+    Description: Read Only Load Balancer Vip Port ID
+    Value:
+      Fn::Select:
+        - port_id
+        - Fn::GetAtt: [ROLoadBalancer, vip]
+  ROLoadBalancerPort:
+    Description: Read Only Load Balancer Port
+    Value: 389
+Resources:
+  ServerGroup:
+    Properties:
+      name:
+        Ref: AWS::StackName
+      policies:
+        - anti-affinity
+    Type: OS::Nova::ServerGroup
+  ROLoadBalancerMonitor:
+    Type: OS::Neutron::HealthMonitor
+    Properties: 
+      delay: 60
+      max_retries: 5
+      timeout: 10
+      type: TCP
+  ROLoadBalancer:
+    Type: OS::Neutron::Pool
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - -ROLoadBalancer
+      protocol: TCP
+      subnet_id: {Ref: SubnetId}
+      lb_method: LEAST_CONNECTIONS
+      monitors:
+      - {Ref: ROLoadBalancerMonitor}
+      vip:
+        protocol_port: 389
+        subnet: {Ref: SubnetId}

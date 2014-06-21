@@ -230,12 +230,15 @@ Resources:
               - "	bnd\n"
               - "fi\n"
               - "exit $?\n"
-              - "EOD\n" #FIXME Start up/setup server....
+              - "EOD\n"
               - "chmod +x /srv/389/master-setup.sh /srv/389/slave-setup.sh /srv/389/user-setup.sh\n"
               - "setup-ds-admin.pl --file /srv/389/389.inf --silent\n"
               - "/srv/389/user-setup.sh\n"
               - "/srv/389/slave-setup.sh\n"
               - "/srv/389/master-setup.sh\n"
+#FIXME Wait until replica is syncronized.
+#FIXME Shutdown services.
+#FIXME Save state in /srv.
               - "## Extra userdata\n"
               - {Ref: ExtraUserData}
               - "\n"
