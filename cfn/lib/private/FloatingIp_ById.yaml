@@ -27,4 +27,4 @@ Resources:
         Ref: FloatingIpId
       port_id:
         Ref: PortId
-    Type: OS::Nova::FloatingIPAssociation
+    Type: OS::Neutron::FloatingIPAssociation
