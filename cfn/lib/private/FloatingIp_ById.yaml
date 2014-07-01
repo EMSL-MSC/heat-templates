@@ -23,7 +23,7 @@ Parameters:
 Resources:
   Floating-IP:
     Properties:
-      floating_ip:
+      floatingip_id:
         Ref: FloatingIpId
       port_id:
         Ref: PortId
