@@ -3,7 +3,7 @@ Description: Create Floating IP
 Outputs:
   FloatingIpId:
     Description: Floating IP ID
-    Value: ""
+    Value: {Ref: Floating-IP}
 Parameters:
   NetworkId:
     Description: NetworkId
@@ -21,8 +21,10 @@ Parameters:
     Description: Port Id to attach to.
     Type: String
 Resources:
-#Heat needs at least one resource. Create a resource that costs next to nothing.
-  ReplicationPw:
-    Type: OS::Heat::RandomString
+  Floating-IP:
     Properties:
-      length: 1
+      floating_ip:
+        Ref: FloatingIpId
+      port_id:
+        Ref: PortId
+    Type: OS::Nova::FloatingIPAssociation

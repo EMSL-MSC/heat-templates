@@ -14,6 +14,12 @@ Parameters:
   IpAddress:
     Description: The floating ip address you would like to attach
     Type: String
+  FloatingIpId:
+    Description: The floating ip id
+    Type: String
+  PortId:
+    Description: Port Id to attach to.
+    Type: String
 Resources:
   Floating-IP:
     Properties:

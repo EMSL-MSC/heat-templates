@@ -7,18 +7,34 @@ Outputs:
       "Fn::GetAtt": [Interface, Outputs.FloatingIpId]
 Parameters:
   NetworkId:
+    Default: '-1'
     Description: NetworkId
     Type: String
   InstanceId:
+    Default: '-1'
     Description: Id of the instance to attach to.
     Type: String
   IpAddress:
+    Default: '-1'
     Description: The floating ip address you would like to attach
+    Type: String
+  FloatingIpId:
+    Default: '-1'
+    Description: The floating ip id
+    Type: String
+  PortId:
+    Default: '-1'
+    Description: Port Id to attach to.
     Type: String
   AssignFloatingIp:
     AllowedValues: ["True", "False"]
     Default: "False"
     Description: Use true to setup a floating ip
+    Type: String
+  Type:
+    AllowedValues: ["instance_ip", "port_id"]
+    Default: "instance_ip"
+    Description: How to configure. instance_ip or port_id.
     Type: String
   BaseURL:
     Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
@@ -26,8 +42,10 @@ Parameters:
     Type: String
 Mappings:
   FloatingIpTemplates:
-    "True": {URL: "/private/FloatingIp_ByIp.yaml"}
-    "False": {URL: "/private/FloatingIp_None.yaml"}
+    "instance_ip-True": {URL: "/private/FloatingIp_ByIp.yaml"}
+    "instance_ip-False": {URL: "/private/FloatingIp_None.yaml"}
+    "port_id-True": {URL: "/private/FloatingIp_ById.yaml"}
+    "port_id-False": {URL: "/private/FloatingIp_None.yaml"}
 Resources:
   Interface:
     Properties:
@@ -35,12 +53,17 @@ Resources:
         NetworkId: {Ref: NetworkId}
         IpAddress: {Ref: IpAddress}
         InstanceId: {Ref: InstanceId}
+        PortId: {Ref: PortId}
+        FloatingIpId: {Ref: FloatingIpId}
       TemplateURL:
           Fn::Join:
           - ''
           - - {Ref: BaseURL}
             - Fn::FindInMap:
               - FloatingIpTemplates
-              - {Ref: AssignFloatingIp}
+              - Fn::Join:
+                - '-'
+                - - {Ref: Type}
+                  - {Ref: AssignFloatingIp}
               - URL
     Type: AWS::CloudFormation::Stack
