@@ -262,7 +262,7 @@ Resources:
               - "/srv/389/user-setup.sh\n"
               - "/srv/389/slave-setup.sh\n"
               - "/srv/389/master-setup.sh\n"
-              - "fail_msg=\`/srv/389/sync-wait.sh\` || error_exit \"\\$fail_msg\"\n"
+              - "fail_msg=\\`/srv/389/sync-wait.sh\\` || error_exit \"\\$fail_msg\"\n"
               - "service dirsrv stop\n"
               - "service dirsrv-admin stop\n"
               - "cp -a /etc/dirsrv/* /srv/389/etc/\n"
