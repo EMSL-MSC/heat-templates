@@ -4,7 +4,26 @@ Parameters:
   SubnetId:
     Description: Which subnet to use
     Type: String
+  NetworkId:
+    Description: Which network to use
+    Type: String
+  ROLBIpId:
+    Default: ''
+    Description: What floating ip id to use for the read only load balancer
+    Type: String
+  BaseURL:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use True to setup a floating ip
+    Type: String
 Outputs:
+  LDAPSecurityGroupId:
+    Description: LDAP Security Group ID
+    Value: {Ref: LDAPSecurityGroup}
   ROServerGroupId:
     Description: Read Only Server Group ID
     Value: {Ref: ServerGroup}
@@ -33,6 +52,19 @@ Outputs:
     Description: Read Only Load Balancer Port
     Value: 389
 Resources:
+  LDAPSecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - '-389'
+      description: 389 Security Group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 389, protocol: tcp, port_range_max: 389}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 9830, protocol: tcp, port_range_max: 9830}
   ServerGroup:
     Properties:
       name:
@@ -63,3 +95,20 @@ Resources:
       vip:
         protocol_port: 389
         subnet: {Ref: SubnetId}
+  ROLoadBalancerFloatingIp:
+    Properties:
+      Parameters:
+        AssignFloatingIp: {Ref: AssignFloatingIp}
+        Type: "port_id"
+        FloatingIpId: {Ref: ROLBIpId}
+        PortId: 
+          Fn::Select:
+            - port_id
+            - Fn::GetAtt: [ROLoadBalancer, vip]
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/FloatingIp.yaml"
+    Type: AWS::CloudFormation::Stack
