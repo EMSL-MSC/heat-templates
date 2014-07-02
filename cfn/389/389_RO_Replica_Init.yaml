@@ -40,6 +40,7 @@ Parameters:
       Description: Root DN Username
       Type: String
   RootDNPassword:
+      Default: ''
       Description: Root DN Password
       Type: String
       NoEcho: True
@@ -117,6 +118,13 @@ Resources:
               - "SERVER=\""
               - {Ref: Server}
               - "\"\n"
+              - "HASHEDROOTDNPASSWORD=\""
+              - {Ref: HashedRootDNPassword}
+              - "\"\n"
+              - "if [ \"x$HASHEDROOTDNPASSWORD\" == \"x\" ]\n"
+              - "then\n"
+              - "  HASHEDROOTDNPASSWORD=`pwdhash \"$ROOTDNPW\"`\n"
+              - "fi\n"
               - "cat > /srv/389/389.inf << EOF\n"
               - "[General]\n"
               - "AdminDomain = $DOMAIN\n"
@@ -146,9 +154,7 @@ Resources:
               - "[slapd]\n"
               - "AddOrgEntries = Yes\n"
               - "AddSampleEntries = No\n"
-              - "HashedRootDNPwd = "
-              - {Ref: HashedRootDNPassword}
-              - "\n"
+              - "HashedRootDNPwd = $HASHEDROOTDNPASSWORD\n"
               - "InstallLdifFile = suggest\n"
               - "RootDN = $ROOTDN\n"
               - "RootDNPwd = $ROOTDNPW\n"
