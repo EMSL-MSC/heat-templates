@@ -1,0 +1,73 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: LDAP RO Server Init
+Parameters:
+  PrimaryNetworkId:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: 'key'
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  IpAddress:
+    Default: 'xx.xx.xx.xx'
+    Description: Floating Ip Address to assign
+    Type: String
+  Image:
+    Default: 'centos-6.5'
+    Description: Image
+    Type: String
+  Name:
+    Default: 'ldapX'
+    Description: Name for volume/server
+    Type: String
+  SecurityGroups:
+    Default: "[\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"]"
+    Description: SecurityGroups
+    Type: String
+  Domain:
+    Default: 'blackhole.com'
+    Description: SecurityGroups
+    Type: String
+  AdminPassword:
+    Default: 'changeme'
+    Description: Admin Password
+    Type: String
+    NoEcho: True
+  Suffix:
+    Default: 'dc=blackhole,dc=com'
+    Description: The suffix for the ldap server
+    Type: String
+  RootDNPassword:
+    Default: 'changeme'
+    Description: Root DN Password
+    Type: String
+    NoEcho: True
+  ConfigDirectoryLdapURL:
+    Default: 'ldap://ldap0.blackhole.com:389/o=NetscapeRoot'
+      Description: Config Directoy LDAP URL
+      Type: String
+  Server:
+    Default: "ldap0.blackhole.com"
+    Description: The full dns name of the server to replicate from.
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        ShortHostName: {Ref: Name}
+        Domain: {Ref: Domain}
+        AdminPassword: {Ref: AdminPassword}
+        Suffix: {Ref: Suffix}
+        VolumeName: {Ref: Name}
+        Server: {Ref: Server}
+        ConfigDirectoryLdapURL: {Ref: ConfigDirectoryLdapURL}
+        RootDNPassword: {Ref: RootDNPassword}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        KeyName: {Ref: KeyName}
+        Flavor: m1.small
+        Image: {Ref: Image}
+        FloatingIpAddress: {Ref: IpAddress}
+        SecurityGroups: {Ref: SecurityGroups}
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/389/389_RO_Replica_Init.yaml'
+    Type: AWS::CloudFormation::Stack

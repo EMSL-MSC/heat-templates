@@ -40,11 +40,11 @@ Parameters:
       Description: Root DN Username
       Type: String
   RootDNPassword:
-      Default: ''
       Description: Root DN Password
       Type: String
       NoEcho: True
   HashedRootDNPassword:
+      Default: ''
       Description: Hashed Root DN Password
       Type: String
       NoEcho: True
