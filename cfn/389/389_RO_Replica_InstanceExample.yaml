@@ -1,0 +1,64 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: LDAP RO Server Init
+Parameters:
+  Name:
+    Default: 'ldapX'
+    Description: ServerName
+    Type: String
+  IpAddress:
+    Default: 'xx.xx.xx.xx'
+    Description: Floating Ip Address to assign
+    Type: String
+  VolumeId:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: Volume where data lives
+    Type: String
+  PrimarySecurityGroup:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: Primary Security Group
+    Type: String
+  InstanceType:
+    Default: m1.small
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone:
+    Default: nova
+    Description: AvailabilityZone for this instance
+    Type: String
+  KeyName:
+    Default: 'key'
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  Image: 
+    Default: 'centos-6.5'
+    Description: Image to use
+    Type: String
+  PrimaryNetworkId:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: PrimaryNetworkId
+    Type: String
+  ServerGroupId:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: Server Group ID for the Server
+    Type: String
+  ROLoadBalancerId:
+    Default: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    Description: Read Only Load Balancer ID
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        Name: {Ref: Name}
+        IpAddress: {Ref: IpAddress}
+        VolumeId: {Ref: VolumeId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        Image: {Ref: Image}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        ServerGroupId: {Ref: ServerGroupId}
+        ROLoadBalancerId: {Ref: ROLoadBalancerId}
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/389/389_RO_Replica.yaml'
+    Type: AWS::CloudFormation::Stack

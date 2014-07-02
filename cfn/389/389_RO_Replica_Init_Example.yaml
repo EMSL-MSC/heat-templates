@@ -45,8 +45,8 @@ Parameters:
     NoEcho: True
   ConfigDirectoryLdapURL:
     Default: 'ldap://ldap0.blackhole.com:389/o=NetscapeRoot'
-      Description: Config Directoy LDAP URL
-      Type: String
+    Description: Config Directoy LDAP URL
+    Type: String
   Server:
     Default: "ldap0.blackhole.com"
     Description: The full dns name of the server to replicate from.
