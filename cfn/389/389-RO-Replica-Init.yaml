@@ -241,7 +241,7 @@ Resources:
               - "while [ \"x\\$status\" == \"TRUE\" ]\n"
               - "do\n"
               - "    sleep 1;\n"
-              - "    status=\\`ldapsearch -h $SERVER -x -b \"cn=$SHORTHN replication,cn=replica,cn=\\\"$SUFFIX\\\",cn=mapping tree,cn=config\" -D \"$ROOTDN\" -w \"$ROOTDNPW\" objectClass=nsDS5ReplicationAgreement nsds5replicaUpdateInProgress -LL | grep 'nsds5replicaUpdateInProgress' | awk -F: '{print $2}' | sed 's/ //'\\`\n"
+              - "    status=\\`ldapsearch -h $SERVER -x -b \"cn=$SHORTHN replication,cn=replica,cn=\\\"$SUFFIX\\\",cn=mapping tree,cn=config\" -D \"$ROOTDN\" -w \"$ROOTDNPW\" objectClass=nsDS5ReplicationAgreement nsds5replicaUpdateInProgress -LL | grep 'nsds5replicaUpdateInProgress' | awk -F: '{print \\$2}' | sed 's/ //'\\`\n"
               - "done\n"
               - "status=\\`ldapsearch -h $SERVER -x -b \"cn=$SHORTHN replication,cn=replica,cn=\\\"$SUFFIX\\\",cn=mapping tree,cn=config\" -D \"$ROOTDN\" -w \"$ROOTDNPW\" objectClass=nsDS5ReplicationAgreement nsds5replicaLastUpdateStatus -LL | grep 'nsds5replicaLastUpdateStatus'\\`\n"
               - "failure=0\n"
@@ -256,7 +256,9 @@ Resources:
               - "## Pre setup userdata.\n"
               - {Ref: PreSetupUserData}
               - "\n"
-              - "mount --bind /srv/389/usr-lib /usr/lib64/dirsrv\n"
+              - "mkdir -p /srsv/389/usr-lib/slapd-$SHORTHN\n"
+              - "mkdir -p /usr/lib64/dirsrv/slapd-$SHORTHN\n"
+              - "mount --bind /srv/389/usr-lib/slapd-$SHORTHN /usr/lib64/dirsrv/slapd-$SHORTHN\n"
               - "mount --bind /srv/389/lib /var/lib/dirsrv\n"
               - "setup-ds-admin.pl --file /srv/389/389.inf --silent\n"
               - "/srv/389/user-setup.sh\n"
@@ -271,7 +273,7 @@ Resources:
               - "\n"
               - "umount /var/lib/dirsrv\n"
               - "umount /usr/lib64/dirsrv\n"
-              - "umount /etc/usr/lib64/dirsrv\n"
+              - "umount /etc/usr/lib64/dirsrv/slapd-$SHORTHN\n"
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
 
