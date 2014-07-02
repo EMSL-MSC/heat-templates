@@ -256,7 +256,7 @@ Resources:
               - "## Pre setup userdata.\n"
               - {Ref: PreSetupUserData}
               - "\n"
-              - "mkdir -p /srsv/389/usr-lib/slapd-$SHORTHN\n"
+              - "mkdir -p /srv/389/usr-lib/slapd-$SHORTHN\n"
               - "mkdir -p /usr/lib64/dirsrv/slapd-$SHORTHN\n"
               - "mount --bind /srv/389/usr-lib/slapd-$SHORTHN /usr/lib64/dirsrv/slapd-$SHORTHN\n"
               - "mount --bind /srv/389/lib /var/lib/dirsrv\n"
@@ -272,8 +272,7 @@ Resources:
               - {Ref: ExtraUserData}
               - "\n"
               - "umount /var/lib/dirsrv\n"
-              - "umount /usr/lib64/dirsrv\n"
-              - "umount /etc/usr/lib64/dirsrv/slapd-$SHORTHN\n"
+              - "umount /usr/lib64/dirsrv/slapd-$SHORTHN\n"
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
 
