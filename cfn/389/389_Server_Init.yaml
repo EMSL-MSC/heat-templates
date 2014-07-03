@@ -123,6 +123,7 @@ Resources:
               - "mkdir -p /srv/389/usr-lib\n"
               - "mkdir -p /srv/389/lib\n"
               - "umount /home || true\n"
+              - "service iptables stop || true\n"
               - "cp -a /etc/ssh /srv/etc\n"
               - "TYPE=\""
               - {Ref: Type}

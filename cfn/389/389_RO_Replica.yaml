@@ -104,6 +104,8 @@ Resources:
             - "NAME=\""
             - {Ref: Name}
             - "\"\n"
+            - "service iptables stop || true\n"
+            - "chkconfig iptables off || true\n"
             - "mkdir -p /usr/lib64/dirsrv/slapd-$NAME\n"
             - "chown nobody.nobody /var/run/dirsrv/\n"
             - "mkdir -p /var/log/dirsrv/admin-serv\n"
