@@ -329,7 +329,6 @@ Resources:
               - "mkdir -p /srv/389/usr-lib/slapd-$SHORTHN\n"
               - "mkdir -p /usr/lib64/dirsrv/slapd-$SHORTHN\n"
               - "mount --bind /srv/389/usr-lib/slapd-$SHORTHN /usr/lib64/dirsrv/slapd-$SHORTHN\n"
-              - "mount --bind /srv/389/lib /var/lib/dirsrv\n"
               - "setup-ds-admin.pl --file /srv/389/389.inf --silent\n"
               - "if [ $TYPE == \"SingleMaster\" ]; then\n"
               - "  /srv/389/changelog-setup.sh\n"
@@ -343,10 +342,10 @@ Resources:
               - "service dirsrv stop\n"
               - "service dirsrv-admin stop\n"
               - "cp -a /etc/dirsrv/* /srv/389/etc/\n"
+              - "cp -a /var/lib/dirsrv/* /srv/389/lib/\n"
               - "## Extra userdata\n"
               - {Ref: ExtraUserData}
               - "\n"
-              - "umount /var/lib/dirsrv\n"
               - "umount /usr/lib64/dirsrv/slapd-$SHORTHN\n"
       TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
