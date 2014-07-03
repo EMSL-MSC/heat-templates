@@ -69,6 +69,10 @@ Parameters:
     Default: "ROReplica"
     Description: Which type of server you want.
     Type: String
+  EpelRepo: 
+    Default: 'http://mirror.utexas.edu/epel/6/x86_64/'
+    Description: Yum repo for epel.
+    Type: String
 Resources:
   ReplicationPw:
     Type: OS::Heat::RandomString
@@ -98,6 +102,20 @@ Resources:
             - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
               - "    /etc/init.d/sshd start\n"
               - "fi\n"
+              - "EPELREPO="
+              - {Ref: EpelRepo}
+              - "\n"
+              - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
+              - "  cat > /etc/yum.repos.d/epel.repo << EOF\n"
+              - "[epel]\n"
+              - "name=epel repo\n"
+              - "baseurl="
+              - {Ref: EpelRepo}
+              - "\n"
+              - "failovermethod=priority\n"
+              - "enabled=1\n"
+              - "gpgcheck=0\n"
+              - "EOF\n"
               - "yum install -y 389-ds 389-admin xorg-x11-xauth liberation-sans-fonts crudini\n"
               - "mkdir -p /srv/etc\n"
               - "mkdir -p /srv/389/etc\n"
