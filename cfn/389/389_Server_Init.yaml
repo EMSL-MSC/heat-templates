@@ -220,7 +220,7 @@ Resources:
               - "objectclass: top\n"
               - "objectclass: extensibleObject\n"
               - "cn: changelog5\n"
-              - "nsslapd-changelogdir: /var/lib/dirsrv/$SHORTHN/changelogdb\n"
+              - "nsslapd-changelogdir: /var/lib/dirsrv/slapd-$SHORTHN/changelogdb\n"
               - "EOF\n"
               - "exit $?\n"
               - "EOD\n"
