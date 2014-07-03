@@ -69,5 +69,5 @@ Resources:
         Image: {Ref: Image}
         FloatingIpAddress: {Ref: IpAddress}
         SecurityGroups: {Ref: SecurityGroups}
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/389/389_RO_Replica_Init.yaml'
+      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/389/389_Server_Init.yaml'
     Type: AWS::CloudFormation::Stack
