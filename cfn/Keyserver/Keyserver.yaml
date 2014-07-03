@@ -110,7 +110,7 @@ Resources:
             - "EPELREPO="
             - {Ref: EpelRepo}
             - "\n"
-            - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
+            - "if [ \"x$KEYSERVERREPO\" != \"x\" ]; then\n"
             - "  cat > /etc/yum.repos.d/keyserver.repo << EOF\n"
             - "[keyserverrepo]\n"
             - "name=keyserver repo\n"
