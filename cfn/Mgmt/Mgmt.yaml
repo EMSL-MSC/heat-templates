@@ -27,6 +27,7 @@ Parameters:
     Default: m1.tiny
     Description: Flavor to boot
     Type: String
+#FIXME centos doesn't work. needs rdo and epel repo's.
   Image:
     Default: centos-6.5
     Description: Image of choice
@@ -95,7 +96,7 @@ Resources:
             - "## Waiting for EBS mounts to become available\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "/etc/init.d/sshd stop || true \n"
-            - "echo '/dev/mgmt-vg0/mgmt-data /srv ext4 defaults,auto,noatime,noexec 0 0'"
+            - "echo '/dev/mgmt-vg0/mgmt-data /srv ext4 defaults,auto,noatime 0 0'"
             - " | tee -a /etc/fstab\n"
             - "mount /srv\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
