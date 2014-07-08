@@ -145,6 +145,7 @@ Resources:
             - " $NAME >> /etc/hosts\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
             - "ln -s /srv/etc/ssh /etc/ssh\n"
+            - "/etc/init.d/sshd restart || true \n"
             - "mount /etc/dirsrv\n"
             - "mount /var/lib/dirsrv\n"
             - "mount /usr/lib64/dirsrv/slapd-$NAME\n"
