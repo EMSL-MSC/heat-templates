@@ -63,7 +63,7 @@ Parameters:
       Description: The full dns name of the server to replicate from.
       Type: String
   SecurityGroups:
-      Default: "[\"default\", \"389\"]"
+      Default: "[\"ldap-base-389\"]"
       Description: Security groups to assign the instance.
       Type: String
   FloatingIpAddress:
@@ -172,7 +172,7 @@ Resources:
               - {Ref: AdminPassword}
               - "\n"
               - "ConfigDirectoryLdapURL = ldap://"
-              - {Ref: ConfigDirectorySever}
+              - {Ref: ConfigDirectoryServer}
               - ":389/o=NetscapeRoot\n"
               - "FullMachineName = $SHORTHN.$DOMAIN\n"
               - "ServerRoot = /usr/lib64/dirsrv\n"
