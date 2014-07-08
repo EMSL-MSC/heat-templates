@@ -333,6 +333,7 @@ Resources:
               - "EOD\n"
               - "chmod +x /srv/389/master-setup.sh /srv/389/slave-setup.sh /srv/389/user-setup.sh /srv/389/sync-wait.sh\n"
               - "fi\n"
+              - "selinuxenabled && setenforce 0\n"
               - "## Pre setup userdata.\n"
               - {Ref: PreSetupUserData}
               - "\n"
