@@ -1,0 +1,162 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: 389 LDAP server replica
+Outputs:
+  Name:
+    Description: public DNS name of the 389 Server
+      Instance
+    Value:
+      Fn::Select:
+      - ip_address
+      - Fn::Select:
+        - '0'
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
+  Id:
+    Description: Instance Id
+    Value:
+      Ref: Instance
+Parameters:
+  Name: {Description: ServerName, Type: String}
+  IpAddress: {Description: Floating Ip Address to assign, Type: String}
+  VolumeId: {Description: Volume where data lives, Type: String}
+  PrimarySecurityGroup: {Description: Primary Security Group Id, Type: String}
+  ExtraUserData: {Default: '', Description: Extra UserData script, Type: String}
+  InstanceType:
+    Default: m1.small
+    Description: EC2 instance type (e.g. m1.large, m1.xlarge, m2.xlarge)
+    Type: String
+  InstanceZone:
+    Default: nova
+    Description: AvailabilityZone for this instance
+    Type: String
+  KeyName: {Description: Name of an existing EC2 KeyPair to enable SSH access, Type: String}
+  Image: {Description: Image to use, Type: String}
+  PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
+  StartupTimeout: {Default: '700', Description: How long to wait on node coming up, Type: Number}
+  ServerGroupId:
+    Description: Server Group ID for the Server
+    Type: String
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+          - -PrimaryPort
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups:
+      - {Ref: PrimarySecurityGroup}
+    Type: OS::Neutron::Port
+  Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              '389-ds': []
+              '389-admin': []
+              xorg-x11-xauth: []
+              liberation-sans-fonts: []
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: InstanceType}
+      key_name: {Ref: KeyName}
+      networks:
+      - port: {Ref: PrimaryInterface}
+      scheduler_hints:
+        group: {Ref: ServerGroupId}
+      user_data:
+        Fn::Base64:
+          Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "yum update -y aws-cfn-bootstrap\n"
+            - "## Error reporting helper function\n"
+            - "function error_exit\n"
+            - "{\n"
+            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - {Ref: WaitHandleServer}
+            - "'\n"
+            - "   exit 1\n"
+            - "}\n"
+            - "function trap_error\n"
+            - "{\n"
+            - "	error_exit \"Line: ${BASH_LINENO[0]}, ExitCode: $1\"\n"
+            - "}\n"
+            - "set -eu\n"
+            - "trap 'trap_error \"$?\"' ERR\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "/etc/init.d/sshd stop || true \n"
+            - "NAME=\""
+            - {Ref: Name}
+            - "\"\n"
+            - "service iptables stop || true\n"
+            - "chkconfig iptables off || true\n"
+            - "mkdir -p /usr/lib64/dirsrv/slapd-$NAME\n"
+            - "chown nobody.nobody /var/run/dirsrv/\n"
+            - "mkdir -p /var/log/dirsrv/admin-serv\n"
+            - "mkdir -p /var/log/dirsrv/slapd-$NAME\n"
+            - "chown -R nobody.nobody /var/log/dirsrv/\n"
+            - "mkdir /var/lock/dirsrv/slapd-$NAME\n"
+            - "chown nobody.nobody /var/lock/dirsrv/slapd-$NAME\n"
+            - "echo \"/dev/$NAME-vg0/$NAME-data\"' /srv ext4 defaults,auto,noatime 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "echo \"/srv/389/usr-lib/slapd-$NAME /usr/lib64/dirsrv/slapd-$NAME \"' none defaults,bind 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "echo \"/srv/389/lib /var/lib/dirsrv \"' none defaults,bind 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "echo \"/srv/389/etc /etc/dirsrv \"' none defaults,bind 0 0'"
+            - " | tee -a /etc/fstab\n"
+            - "mount /srv\n"
+            - "mv /etc/ssh /etc/ssh.orig\n"
+            - "ln -s /srv/etc/ssh /etc/ssh\n"
+            - "mount /etc/dirsrv\n"
+            - "mount /var/lib/dirsrv\n"
+            - "mount /usr/lib64/dirsrv/slapd-$NAME\n"
+            - "chkconfig dirsrv on\n"
+            - "chkconfig dirsrv-admin on\n"
+            - "service dirsrv-admin start\n"
+            - "service dirsrv start\n"
+            - "## Extra userdata\n"
+            - {Ref: ExtraUserData}
+            - "\n"
+            - "## CloudFormation signal that setup is complete\n"
+            - "/opt/aws/bin/cfn-signal -e 0 -r \"Server setup complete\" '"
+            - {Ref: WaitHandleServer}
+            - "'\n"
+    Type: OS::Nova::Server
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: PrimaryNetworkId
+      InstanceId:
+        Ref: Instance
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
+  WaitConditionServer:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleServer}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleServer:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle

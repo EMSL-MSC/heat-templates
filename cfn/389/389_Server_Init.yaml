@@ -73,6 +73,10 @@ Parameters:
     Default: 'http://mirror.utexas.edu/epel/6/x86_64/'
     Description: Yum repo for epel.
     Type: String
+  BaseURL:
+    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn'
+    Description: Base URL where other templates live.
+    Type: String
 Resources:
   ReplicationPw:
     Type: OS::Heat::RandomString
@@ -97,7 +101,7 @@ Resources:
         FloatingIpAddress: {Ref: FloatingIpAddress}
         ExtraUserData:
           Fn::Base64:
-            Fn::Join: #FIXME this shouldn't be an init. should probably just be a transient instance.
+            Fn::Join:
             - ''
             - - "if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then\n"
               - "    /etc/init.d/sshd start\n"
@@ -238,8 +242,9 @@ Resources:
               - "nsds5replicatype: 3\n"
               - "nsds5flags: 1\n"
               - "nsds5ReplicaPurgeDelay: 604800\n"
-              - "nsds5ReplicaBindDN: cn=replication manager,cn=config\n"
               - "EOF\n"
+              - "#FIXME: This line sets up multimaster replication. Add a param to support this in the future.\n"
+              - "#nsds5ReplicaBindDN: cn=replication manager,cn=config\n"
               - "exit $?\n"
               - "EOD\n"
               - "chmod +x /srv/389/supplier-setup.sh /srv/389/changelog-setup.sh\n"
@@ -347,6 +352,10 @@ Resources:
               - {Ref: ExtraUserData}
               - "\n"
               - "umount /usr/lib64/dirsrv/slapd-$SHORTHN\n"
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/lib/Volume-Init.yaml"
     Type: AWS::CloudFormation::Stack
 
