@@ -143,6 +143,8 @@ Resources:
             - "echo "
             - {Ref: IpAddress}
             - " $NAME >> /etc/hosts\n"
+            - "hostname $NAME\n"
+            - "sed -i 's/HOSTNAME=.*/HOSTNAME='$NAME'/' /etc/sysconfig/network\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
             - "ln -s /srv/etc/ssh /etc/ssh\n"
             - "/etc/init.d/sshd restart || true \n"
@@ -157,7 +159,7 @@ Resources:
             - "    done\n"
             - "#FIXME Even after the above, the admin server is still grumpy due to selinux brokenness. Just going to disable it for now.\n"
             - "    setenforce 0\n"
-            - "    sed -i 's/SELINUX=enforcing/SELINUX=permissive/' /etc/sysconfig/selinux\n"
+            - "    sed -i 's/SELINUX=enforcing/SELINUX=permissive/' /etc/sysconfig/selinux /etc/selinux/config\n"
             - "fi\n"
             - "chkconfig dirsrv on\n"
             - "chkconfig dirsrv-admin on\n"
