@@ -42,26 +42,26 @@ Resources:
   Instance:
     Properties:
       Parameters:
-  Name: {Ref: Name}
-  IpAddress: {Ref: IpAddress}
-  VolumeId: {Ref: VolumeId}
-  PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
-  InstanceType: {Ref: InstanceType}
-  InstanceZone: {Ref: InstanceZone}
-  KeyName: {Ref: KeyName}
-  Image: {Ref: Image}
-  PrimaryNetworkId: {PrimaryNetworkId}
-  StartupTimeout: {StartupTimeout}
-  ServerGroupId: {ServerGroupId}
-  ExtraUserData:
-    Fn::Base64:
-      Fn::Join:
-      - ''
-      - - "/srv/389/master-setup.sh\n"
-        - "fail_msg=\\`/srv/389/sync-wait.sh\\` || error_exit \"\\$fail_msg\"\n"
-        - "## Extra userdata\n"
-        - {Ref: ExtraUserData}
-        - "\n"
+        Name: {Ref: Name}
+        IpAddress: {Ref: IpAddress}
+        VolumeId: {Ref: VolumeId}
+        PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
+        InstanceType: {Ref: InstanceType}
+        InstanceZone: {Ref: InstanceZone}
+        KeyName: {Ref: KeyName}
+        Image: {Ref: Image}
+        PrimaryNetworkId: {PrimaryNetworkId}
+        StartupTimeout: {StartupTimeout}
+        ServerGroupId: {ServerGroupId}
+        ExtraUserData:
+          Fn::Base64:
+            Fn::Join:
+            - ''
+            - - "/srv/389/master-setup.sh\n"
+              - "fail_msg=\\`/srv/389/sync-wait.sh\\` || error_exit \"\\$fail_msg\"\n"
+              - "## Extra userdata\n"
+              - {Ref: ExtraUserData}
+              - "\n"
       TemplateURL:
           Fn::Join:
           - ''
