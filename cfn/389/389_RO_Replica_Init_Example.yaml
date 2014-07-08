@@ -51,6 +51,11 @@ Parameters:
     Default: "ldap0.blackhole.com"
     Description: The full dns name of the server to replicate from.
     Type: String
+Outputs:
+  VolumeId:
+    Description: Volume ID
+    Value:
+     Fn::GetAtt: [Instance, VolumeId]
 Resources:
   Instance:
     Properties:
