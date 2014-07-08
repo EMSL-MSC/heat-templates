@@ -50,7 +50,7 @@ Resources:
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
         Image: {Ref: Image}
-        PrimaryNetworkId: {PrimaryNetworkId}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
         StartupTimeout: {StartupTimeout}
         ServerGroupId: {ServerGroupId}
         ExtraUserData:
