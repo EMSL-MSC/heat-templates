@@ -121,6 +121,7 @@ Resources:
             - "NAME=\""
             - {Ref: Name}
             - "\"\n"
+            - "lvchange /dev/$NAME-vg0/$NAME-data -a y || true\n"
             - "service iptables stop || true\n"
             - "chkconfig iptables off || true\n"
             - "mkdir -p /usr/lib64/dirsrv/slapd-$NAME\n"
