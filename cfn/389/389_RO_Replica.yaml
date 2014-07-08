@@ -69,7 +69,6 @@ Resources:
             - "/389/389_Server_init.yaml"
     Type: AWS::CloudFormation::Stack
   PoolMember:
-    DependsOn: WaitConditionServer
     Properties:
         address:
           Fn::GetAtt: [Instance, Name]
