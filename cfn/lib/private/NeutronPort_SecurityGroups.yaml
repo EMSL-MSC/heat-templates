@@ -4,6 +4,10 @@ Outputs:
   PortId:
     Description: Neutron Port Id
     Value: {Ref: Interface}
+  FixedIps:
+    Description: Neutron Port Fixed IPs
+    Value:
+      Fn::GetAtt: [Interface, fixed_ips]
 Parameters:
   Name:
     Default: ""
