@@ -3,7 +3,7 @@ The 389 ldap server templates currently broken up into a few pieces.
 Step 1: Init the Cluster
 
 To start a new 389 cluster, spawn stack:
-389_BaseCluster.yaml
+389_BaseCluster.yaml. name it something like "ldap-base".
 
 This sets up all of your static cluster bits. Anti-Affinity Server Group, Read Only Load Balancer, etc.
 
