@@ -57,6 +57,7 @@ Resources:
         config:
           packages:
             yum:
+              lvm2: []
               '389-ds': []
               '389-admin': []
               xorg-x11-xauth: []
