@@ -51,8 +51,8 @@ Resources:
         KeyName: {Ref: KeyName}
         Image: {Ref: Image}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
-        StartupTimeout: {StartupTimeout}
-        ServerGroupId: {ServerGroupId}
+        StartupTimeout: {Ref: StartupTimeout}
+        ServerGroupId: {Ref: ServerGroupId}
         ExtraUserData:
           Fn::Base64:
             Fn::Join:
