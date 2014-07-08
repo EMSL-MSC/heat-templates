@@ -94,13 +94,6 @@ Resources:
             - "}\n"
             - "set -eu\n"
             - "trap 'trap_error \"$?\"' ERR\n"
-            - "## Initialize CloudFormation bits\n"
-            - "/opt/aws/bin/cfn-init -s "
-            - {Ref: "AWS::StackName"}
-            - " -r Instance --region "
-            - {Ref: "AWS::Region"}
-            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
-            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "EPELREPO="
             - {Ref: EpelRepo}
             - "\n"
@@ -111,6 +104,13 @@ Resources:
             - "baseurl="
             - {Ref: EpelRepo}
             - "\n"
+            - "## Initialize CloudFormation bits\n"
+            - "/opt/aws/bin/cfn-init -s "
+            - {Ref: "AWS::StackName"}
+            - " -r Instance --region "
+            - {Ref: "AWS::Region"}
+            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "failovermethod=priority\n"
             - "enabled=1\n"
             - "gpgcheck=0\n"
