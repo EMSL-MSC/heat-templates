@@ -53,8 +53,8 @@ Parameters:
       Description: Hashed Root DN Password
       Type: String
       NoEcho: True
-  ConfigDirectoryLdapURL:
-      Description: Config Directoy LDAP URL
+  ConfigDirectoryServer:
+      Description: Config Directoy LDAP Server
       Type: String
   Suffix:
       Description: The suffix for the ldap server
@@ -171,9 +171,9 @@ Resources:
               - "ConfigDirectoryAdminPwd = "
               - {Ref: AdminPassword}
               - "\n"
-              - "ConfigDirectoryLdapURL = "
-              - {Ref: ConfigDirectoryLdapURL}
-              - "\n"
+              - "ConfigDirectoryLdapURL = ldap://"
+              - {Ref: ConfigDirectorySever}
+              - ":389/o=NetscapeRoot\n"
               - "FullMachineName = $SHORTHN.$DOMAIN\n"
               - "ServerRoot = /usr/lib64/dirsrv\n"
               - "SuiteSpotGroup = nobody\n"

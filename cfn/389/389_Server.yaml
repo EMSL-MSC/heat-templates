@@ -35,6 +35,10 @@ Parameters:
   ServerGroupId:
     Description: Server Group ID for the Server
     Type: String
+  EpelRepo: 
+    Default: 'http://mirror.utexas.edu/epel/6/x86_64/'
+    Description: Yum repo for epel.
+    Type: String
 Resources:
   PrimaryInterface:
     Properties:
@@ -97,6 +101,21 @@ Resources:
             - {Ref: "AWS::Region"}
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
+            - "EPELREPO="
+            - {Ref: EpelRepo}
+            - "\n"
+            - "if [ \"x$EPELREPO\" != \"x\" ]; then\n"
+            - "  cat > /etc/yum.repos.d/epel.repo << EOF\n"
+            - "[epel]\n"
+            - "name=epel repo\n"
+            - "baseurl="
+            - {Ref: EpelRepo}
+            - "\n"
+            - "failovermethod=priority\n"
+            - "enabled=1\n"
+            - "gpgcheck=0\n"
+            - "EOF\n"
+            - "fi\n"
             - "/etc/init.d/sshd stop || true \n"
             - "NAME=\""
             - {Ref: Name}

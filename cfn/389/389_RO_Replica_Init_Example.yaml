@@ -43,9 +43,9 @@ Parameters:
     Description: Root DN Password
     Type: String
     NoEcho: True
-  ConfigDirectoryLdapURL:
-    Default: 'ldap://ldap0.blackhole.com:389/o=NetscapeRoot'
-    Description: Config Directoy LDAP URL
+  ConfigDirectoryServer:
+    Default: 'ldap0.blackhole.com'
+    Description: Config Directoy Server
     Type: String
   Server:
     Default: "ldap0.blackhole.com"
@@ -66,7 +66,7 @@ Resources:
         Suffix: {Ref: Suffix}
         VolumeName: {Ref: Name}
         Server: {Ref: Server}
-        ConfigDirectoryLdapURL: {Ref: ConfigDirectoryLdapURL}
+        ConfigDirectoryServer: {Ref: ConfigDirectoryServer}
         RootDNPassword: {Ref: RootDNPassword}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         KeyName: {Ref: KeyName}
