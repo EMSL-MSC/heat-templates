@@ -104,6 +104,11 @@ Resources:
             - "baseurl="
             - {Ref: EpelRepo}
             - "\n"
+            - "failovermethod=priority\n"
+            - "enabled=1\n"
+            - "gpgcheck=0\n"
+            - "EOF\n"
+            - "fi\n"
             - "## Initialize CloudFormation bits\n"
             - "/opt/aws/bin/cfn-init -s "
             - {Ref: "AWS::StackName"}
@@ -111,11 +116,6 @@ Resources:
             - {Ref: "AWS::Region"}
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
-            - "failovermethod=priority\n"
-            - "enabled=1\n"
-            - "gpgcheck=0\n"
-            - "EOF\n"
-            - "fi\n"
             - "/etc/init.d/sshd stop || true \n"
             - "NAME=\""
             - {Ref: Name}
