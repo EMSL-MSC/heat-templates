@@ -60,5 +60,5 @@ Resources:
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         ServerGroupId: {Ref: ServerGroupId}
         ROLoadBalancerId: {Ref: ROLoadBalancerId}
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/389/389_RO_Replica.yaml'
+      TemplateURL: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/389/389_RO_Replica.yaml'
     Type: AWS::CloudFormation::Stack

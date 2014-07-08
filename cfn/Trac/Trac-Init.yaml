@@ -90,6 +90,6 @@ Resources:
               - "## Extra userdata\n"
               - {Ref: ExtraUserData}
               - "\n"
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
+      TemplateURL: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib/Volume-Init.yaml'
     Type: AWS::CloudFormation::Stack
 

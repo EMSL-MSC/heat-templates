@@ -42,5 +42,5 @@ Resources:
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         InstanceType: m1.tiny
         Image: {Ref: Image}
-      TemplateURL: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/Trac/Trac.yaml'
+      TemplateURL: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/Trac/Trac.yaml'
     Type: AWS::CloudFormation::Stack

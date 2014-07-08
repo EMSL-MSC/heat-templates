@@ -69,7 +69,7 @@ Parameters:
     Description: The floating ip address you would like to attach
     Type: String
   BaseURL:
-    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
     Type: String
 Resources:

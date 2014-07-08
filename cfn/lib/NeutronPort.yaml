@@ -23,7 +23,7 @@ Parameters:
     Description: Security Groups to add to the instance
     Type: String
   BaseURL:
-    Default: 'https://raw.github.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
     Type: String
 #Needed since security_groups: ["default"] is not the same thing as no security groups. If you are an admin, you may have access to multiple "default" security groups and the former fails.
