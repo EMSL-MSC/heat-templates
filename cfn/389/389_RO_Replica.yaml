@@ -9,7 +9,7 @@ Outputs:
   Id:
     Description: Instance Id
     Value:
-      Fn::GetAtt: [Instance, Id]
+      Fn::GetAtt: [Instance, Outputs.Id]
 Parameters:
   Name: {Description: ServerName, Type: String}
   IpAddress: {Description: Floating Ip Address to assign, Type: String}
