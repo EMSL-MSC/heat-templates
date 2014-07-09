@@ -4,7 +4,7 @@ Outputs:
   FixedIps:
     Description: Neutron Port Fixed IPs
     Value:
-      Fn::GetAtt: [PrimaryInterface, FixedIps]
+      Fn::GetAtt: [PrimaryInterface, Outputs.FixedIps]
   VolumeId:
     Description: Volume ID
     Value:

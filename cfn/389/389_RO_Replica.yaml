@@ -5,7 +5,7 @@ Outputs:
     Description: public DNS name of the 389 Server
       Instance
     Value:
-      Fn::GetAtt: [Instance, Name]
+      Fn::GetAtt: [Instance, Outputs.Name]
   Id:
     Description: Instance Id
     Value:
