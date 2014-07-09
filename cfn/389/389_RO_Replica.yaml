@@ -71,7 +71,7 @@ Resources:
   PoolMember:
     Properties:
         address:
-          Fn::GetAtt: [Instance, Name]
+          Fn::GetAtt: [Instance, Outputs.Name]
         pool_id: {Ref: ROLoadBalancerId}
         protocol_port: 389
     Type: OS::Neutron::PoolMember
