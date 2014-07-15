@@ -68,6 +68,14 @@ Parameters:
     Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
     Type: String
+  Metadata:
+    Default: "{}"
+    Description: Extra metadata to attach to the instance.
+    Type: Json
+  Mnt:
+    Default: "/srv"
+    Description: Where to mount the volume
+    Type: String
 Resources:
   PrimaryInterface:
     Properties:
@@ -105,6 +113,7 @@ Resources:
               mdadm: []
               lvm2: []
     Properties:
+      metadata: {Ref: Metadata}
       availability_zone: {Ref: InstanceZone}
       image: {Ref: Image}
       flavor: {Ref: Flavor}
@@ -149,6 +158,9 @@ Resources:
             - "VOLUMEFORMAT="
             - {Ref: VolumeFormat}
             - "\n"
+            - "MNT="
+            - {Ref: Mnt}
+            - "\n"
             - "if [ $VOLUME_CONTAINER != \"user\" ]; then"
             - "(echo mklabel msdos; echo mkpart primary ext2 0 -1;"
             - "echo print; echo quit) | parted -a optimal /dev/vdb\n"
@@ -183,13 +195,13 @@ Resources:
             - "else\n"
             - "  mke2fs -t $VOLUMEFORMAT -F $SUBDEVICE >> /tmp/mkfs.log 2>&1\n"
             - "fi\n"
-            - "mount $SUBDEVICE /srv\n"
+            - "mount $SUBDEVICE $MNT\n"
             - "fi #end of VOLUME_CONTAINER !user\n"
             - "## Extra userdata\n"
             - {Ref: ExtraUserData}
             - "\n"
             - "if [ $VOLUME_CONTAINER != \"user\" ]; then\n"
-            - "umount /srv\n"
+            - "umount $MNT\n"
             - "fi\n"
             - "if [ $VOLUME_CONTAINER = \"lvmenc\" -o $VOLUME_CONTAINER = \"lvm\" ]; then\n" 
             - "  vgchange -a n $VG_NAME\n"
