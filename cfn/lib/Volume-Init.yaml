@@ -195,6 +195,7 @@ Resources:
             - "else\n"
             - "  mke2fs -t $VOLUMEFORMAT -F $SUBDEVICE >> /tmp/mkfs.log 2>&1\n"
             - "fi\n"
+            - "mkdir -p $MNT\n"
             - "mount $SUBDEVICE $MNT\n"
             - "fi #end of VOLUME_CONTAINER !user\n"
             - "## Extra userdata\n"
