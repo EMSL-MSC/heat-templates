@@ -76,6 +76,11 @@ Parameters:
   VolumeSize: {Default: '2', Description: Volume
       size for each EBS volume, Type: Number}
 Resources:
+  ConfigSrvGroup:
+    Properties:
+      name: ConfigSrvGroupAntiAffinity
+      policies: [ 'anti-affinity' ]
+    Type: OS::Nove::ServerGroup
   ConfigSvr1:
     Properties:
       Parameters:
@@ -93,6 +98,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerHints: { "group": { Ref: ConfigSrvGroup } }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
