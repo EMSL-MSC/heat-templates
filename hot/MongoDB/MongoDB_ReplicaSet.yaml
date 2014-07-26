@@ -67,6 +67,11 @@ Parameters:
   ReplicaSet1ExtraUserData: {Default: '', Description: Extra
       UserData script, Type: String}
 Resources:
+  ReplicaSetSvrGroup:
+    Properties:
+      name: ReplicaSetSrvGroupAntiAffinity
+      policies: [ 'anti-affinity' ]
+    Type: OS::Nova::ServerGroup    
   ReplicaSetMember1:
     DependsOn: ReplicaSetMember2
     Properties:
@@ -103,6 +108,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: {Ref: ReplicaSetSvrGroup}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         ReplicaSetName: {Ref: ReplicaSetName}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
@@ -126,6 +132,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: {Ref: ReplicaSetSvrGroup}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         ReplicaSetName: {Ref: ReplicaSetName}
         PrimaryNetworkId: {Ref: PrimaryNetworkId}

@@ -49,6 +49,8 @@ Parameters:
       this instance, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
       to enable SSH access, Type: String}
+  SchedulerGroup: {Description: Scheduler group
+      for Nova hints, Type: String}
   LinuxDistribution:
     AllowedValues: [SL6, F18, F17, U10, RHEL-6.1, RHEL-6.2, RHEL-6.3]
     Default: SL6
@@ -212,6 +214,7 @@ Resources:
             - '-'
             - {Ref: SvrId}
       availability_zone: {Ref: InstanceZone}
+      scheduler_hints: { 'group': {Ref: SchedulerGroup} }
       image:
         Fn::FindInMap:
         - DistroArch2AMI
