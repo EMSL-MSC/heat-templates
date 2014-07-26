@@ -98,7 +98,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
-        scheduler_hints: { "group": { Ref: ConfigSrvGroup } }
+        SchedulerHint: { Ref: ConfigSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}

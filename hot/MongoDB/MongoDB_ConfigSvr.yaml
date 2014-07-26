@@ -68,6 +68,8 @@ Parameters:
       long to wait on node coming up, Type: Number}
   VolumeSize: {Default: '2', Description: Volume
       size for each EBS volume, Type: Number}
+  SchedulerHint: {Default: 'anti-affinity', Description: The
+      scheduler hints for the node, Type: String}
 Resources:
   PrimaryInterface:
     Properties:
@@ -128,6 +130,7 @@ Resources:
             - '-Config'
             - {Ref: SvrId}
       availability_zone: {Ref: InstanceZone}
+      scheduler_hints: {'group': {Ref: SchedulerHint} }
       image:
         Fn::FindInMap:
         - DistroArch2AMI
