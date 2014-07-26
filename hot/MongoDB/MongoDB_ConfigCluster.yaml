@@ -80,7 +80,7 @@ Resources:
     Properties:
       name: ConfigSrvGroupAntiAffinity
       policies: [ 'anti-affinity' ]
-    Type: OS::Nove::ServerGroup
+    Type: OS::Nova::ServerGroup
   ConfigSvr1:
     Properties:
       Parameters:
