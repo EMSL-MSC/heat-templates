@@ -98,7 +98,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
-        SchedulerHint: { Ref: ConfigSrvGroup }
+        SchedulerGroup: { Ref: ConfigSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
@@ -146,6 +146,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: { Ref: ConfigSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
@@ -193,6 +194,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: { Ref: ConfigSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
