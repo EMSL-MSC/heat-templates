@@ -77,6 +77,11 @@ Parameters:
   PrimaryNetworkId: {Description: PrimaryNetworkId,
     Type: String}
 Resources:
+  MasterSrvGroup:
+    Properties:
+      name: MasterSrvGroupAntiAffinity
+      policies: [ 'anti-affinity' ]
+    Type: OS::Nova::ServerGroup
   MasterSvr1:
     Properties:
       Parameters:
@@ -113,6 +118,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: { Ref: MasterSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
@@ -178,6 +184,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: { Ref: MasterSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}
@@ -243,6 +250,7 @@ Resources:
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
+        SchedulerGroup: { Ref: MasterSrvGroup }
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
         BackendSecurityGroup: {Ref: BackendSecurityGroup}

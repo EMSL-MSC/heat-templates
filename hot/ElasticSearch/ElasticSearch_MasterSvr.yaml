@@ -71,6 +71,8 @@ Parameters:
     Type: String}
   StartupTimeout: {Default: '700', Description: How
       long to wait on node coming up, Type: Number}
+  SchedulerGroup: {Default: '', Description: The
+      scheduler hints for the node, Type: String}
 Resources:
   PrimaryInterface:
     Properties:
@@ -117,6 +119,7 @@ Resources:
           - -Master
           - {Ref: SvrId}
       availability_zone: {Ref: InstanceZone}
+      scheduler_hints: {'group': {Ref: SchedulerGroup} }
       image:
         Fn::FindInMap:
         - DistroArch2AMI
