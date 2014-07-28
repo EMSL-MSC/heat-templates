@@ -83,12 +83,7 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - "## Waiting until mongods have started\n"
-            - "until nc -z localhost 27017 ; do sleep 1 ; done\n"
-            - "until nc -z "
-            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
-            - " 27017 ; do sleep 1 ; done\n"
-            - "## Create replica set configuration\n"
+          - - "## Create replica set configuration\n"
             - "## The following is only needed on the PRIMARY\n"
             - "HOSTNAME=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | "
             - "awk '{print $1}'`\n"
@@ -103,6 +98,11 @@ Resources:
             - "]};\n"
             - "rs.initiate(config);\n"
             - "EOF\n"
+            - "## Waiting until mongods have started\n"
+            - "until nc -z $HOSTNAME 27017 ; do sleep 1 ; done\n"
+            - "until nc -z "
+            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+            - " 27017 ; do sleep 1 ; done\n"
             - "/usr/bin/mongo /tmp/replicaSetConfigInit.js > /tmp/replica-setup.log 2>&1\n"
             - {Ref: ReplicaSet1ExtraUserData}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
