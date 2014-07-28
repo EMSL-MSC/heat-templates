@@ -157,7 +157,7 @@ Resources:
             - " -r Instance --region "
             - {Ref: "AWS::Region"}
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
-            - "yum -y install mongo-10gen-server > /tmp/yum-mongo.log 2>&1\n"
+            - "yum -y install mongo-10gen-server mongo-10gen > /tmp/yum-mongo.log 2>&1\n"
             - "cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1\n"
             - "sed -i 's/eth0/eth1/' /etc/sysconfig/network-scripts/ifcfg-eth1\n"
             - "echo PEERDNS=no >> /etc/sysconfig/network-scripts/ifcfg-eth1\n"

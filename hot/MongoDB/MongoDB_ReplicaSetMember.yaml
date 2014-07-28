@@ -259,7 +259,7 @@ Resources:
             - "while [ ! -e /dev/vdc ]; do echo waiting for /dev/vdc to attach; sleep 10; done\n"
             - "while [ ! -e /dev/vdd ]; do echo waiting for /dev/vdd to attach; sleep 10; done\n"
             - "while [ ! -e /dev/vde ]; do echo waiting for /dev/vde to attach; sleep 10; done\n"
-            - "yum -y install mongo-10gen-server xfsprogs > /tmp/yum-mongo.log 2>&1\n"
+            - "yum -y install mongo-10gen-server mongo-10gen xfsprogs > /tmp/yum-mongo.log 2>&1\n"
             - "## Create RAID10 and persist configuration\n"
             - "mdadm --verbose --create /dev/md0 --level=10 --chunk=256 --raid-devices=4 "
             - "/dev/vdb /dev/vdc /dev/vdd /dev/vde > /tmp/mdadm.log 2>&1\n"
