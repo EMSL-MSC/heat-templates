@@ -73,7 +73,6 @@ Resources:
       policies: [ 'anti-affinity' ]
     Type: OS::Nova::ServerGroup    
   ReplicaSetMember1:
-    DependsOn: ReplicaSetMember2
     Properties:
       Parameters:
         ClusterName: {Ref: ClusterName}
@@ -84,8 +83,11 @@ Resources:
         ExtraUserData:
           Fn::Join:
           - ''
-          - - "## Waiting until mongod has started\n"
-            - "sleep 120\n"
+          - - "## Waiting until mongods have started\n"
+            - "until nc -z localhost 27017 ; do sleep 1 ; done\n"
+            - "until nc -z "
+            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+            - " 27017 ; do sleep 1 ; done\n"
             - "## Create replica set configuration\n"
             - "## The following is only needed on the PRIMARY\n"
             - "HOSTNAME=`/sbin/ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | "
