@@ -81,9 +81,9 @@ Resources:
             - '-'
             - {Ref: ReplicaSetName}
             - '-BackendPort1'
-      network_id: {Ref: BackendNetworkId}
       fixed_ips:
       - subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
       security_groups:
       - {Ref: BackendSecurityGroup}
     Type: OS::Neutron::Port
@@ -96,9 +96,9 @@ Resources:
             - '-'
             - {Ref: ReplicaSetName}
             - '-BackendPort2'
-      network_id: {Ref: BackendNetworkId}
       fixed_ips:
       - subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
       security_groups:
       - {Ref: BackendSecurityGroup}
     Type: OS::Neutron::Port
