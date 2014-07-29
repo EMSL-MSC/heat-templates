@@ -198,7 +198,7 @@ Resources:
       key_name: {Ref: KeyName}
       networks:
         - {port: {Ref: PrimaryInterface}}
-        - {port: {Ref: BackendPortID}}
+        - {port: {Ref: BackendPortId}}
       user_data:
         Fn::Base64:
           Fn::Join:
