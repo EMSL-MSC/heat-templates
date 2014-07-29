@@ -108,7 +108,7 @@ Resources:
         ClusterName: {Ref: ClusterName}
         SvrId: '1'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
-        BackendPortId: {Ref: BackendPortId1}
+        BackendPortId: {Ref: ReplicaSetPort1}
         ExtraUserData:
           Fn::Join:
           - ''
@@ -164,7 +164,7 @@ Resources:
         ClusterName: {Ref: ClusterName}
         SvrId: '2'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
-        BackendPortId: {Ref: BackendPortId2}
+        BackendPortId: {Ref: ReplicaSetPort2}
         ExtraUserData: echo foo; echo bar
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
