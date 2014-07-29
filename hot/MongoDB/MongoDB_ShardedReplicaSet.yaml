@@ -78,15 +78,9 @@ Resources:
             - /$HOSTNAME
             - ":27017\");\n"
             - "EOF\n"
-            - "false\n"
-            - "while [ $? -ne 0 ]; do \n"
-            - "sleep 10\n"
-            - "mongo --eval 'var s = rs.status().myState; if (s == 1 || s == 2) {print(\"READY\","
-            - "s); quit(0)}; quit(1)'\n"
-            - "done\n"
-            - "sleep 20\n"
+            - "until mongo --eval 'var s = rs.status().myState; if (s == 1 || s == 2) {print(\"READY\","
+            - "s); quit(0)}; quit(1)' ; do sleep 1 ; done"
             - "/usr/bin/mongo --port 13370 /tmp/shardInit.js > /tmp/shard-setup.log 2>&1\n"
-            - "sleep 20\n"
             - "killall mongos\n"
       TemplateURL:
         Fn::Join:
