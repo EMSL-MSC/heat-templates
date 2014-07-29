@@ -83,7 +83,7 @@ Resources:
             - '-BackendPort1'
       network_id: {Ref: BackendNetworkId}
       fixed_ips:
-        - {Ref: BackendSubnetId}
+      - {Ref: BackendSubnetId}
       security_groups:
       - {Ref: BackendSecurityGroup}
     Type: OS::Neutron::Port
@@ -98,7 +98,7 @@ Resources:
             - '-BackendPort2'
       network_id: {Ref: BackendNetworkId}
       fixed_ips:
-        - {Ref: BackendSubnetId}
+      - {Ref: BackendSubnetId}
       security_groups:
       - {Ref: BackendSecurityGroup}
     Type: OS::Neutron::Port
