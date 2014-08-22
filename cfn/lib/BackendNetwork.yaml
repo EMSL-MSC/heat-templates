@@ -14,15 +14,15 @@ Parameters:
   DynamicStart:
     Default: 10
     Description: Start of dynamic range
-    Type: Number
+    Type: String
   DynamicEnd:
     Default: 240
     Description: End of dynamic range
-    Type: Number
+    Type: String
   SubnetSize:
     Default: 24
     Description: Network size
-    Type: Number
+    Type: String
   NetworkName:
     Description: Network Name
     Type: String
