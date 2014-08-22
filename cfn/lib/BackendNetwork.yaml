@@ -33,7 +33,7 @@ Resources:
   network:
     Type: 'OS::Neutron::Net'
     Properties:
-      name: {Ref: NetowrkName}
+      name: {Ref: NetworkName}
   subnet:
     Properties:
       name: {Ref: SubnetName}
