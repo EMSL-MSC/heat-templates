@@ -44,7 +44,7 @@ Resources:
           - - {Ref: IpPrefix}
             - '.'
             - {Ref: DynamicEnd}
-      - start:
+        start:
           Fn::Join:
           - ''
           - - {Ref: IpPrefix}
