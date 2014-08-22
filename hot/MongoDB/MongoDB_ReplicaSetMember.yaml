@@ -16,16 +16,6 @@ Mappings:
     RHEL-6.3: {'32': rhel63-i386-cfntools, '64': rhel63-x86_64-cfntools}
     SL6: {'32': NOT IMPLEMENTED, '64': sl6-msc-image}
     U10: {'32': U10-i386-cfntools, '64': U10-x86_64-cfntools}
-Outputs:
-  ReplicaSetMemberName:
-    Description: public DNS name of the MongoDB Replica Set Member
-      Instance
-    Value:
-      Fn::Select:
-      - ip_address
-      - Fn::Select:
-        - '0'
-        - Fn::GetAtt: [BackendInterface, fixed_ips]
 Parameters:
   ClusterName:
     Description: Cluster Name
@@ -33,9 +23,7 @@ Parameters:
   SvrId:
     Description: Server ID
     Type: String
-  BackendNetworkId: {Description: BackendNetworkId,
-    Type: String}
-  BackendSubnetId: {Description: BackendSubnetId,
+  BackendPortId: {Description: BackendPortId,
     Type: String}
   ExtraUserData: {Default: '', Description: Extra
       UserData script, Type: String}
@@ -62,8 +50,6 @@ Parameters:
       replica set, Type: String}
   PrimarySecurityGroup: {Description: Primary MongoDB
       security group name, Type: String}
-  BackendSecurityGroup: {Description: Backend MongoDB
-      security group name, Type: String}
   MongoDBYumRepo: {Description: Mongo DB Yum Repo,
     Default: 'http://downloads-distro.mongodb.org/repo/redhat/os/x86_64/',
     Type: String}
@@ -72,21 +58,6 @@ Parameters:
   VolumeSize: {Default: '40', Description: Volume
       size for each EBS volume, Type: Number}
 Resources:
-  BackendInterface:
-    Properties:
-      name:
-        Fn::Join:
-          - ''
-          - - {Ref: ClusterName}
-            - '-'
-            - {Ref: ReplicaSetName}
-            - '-'
-            - {Ref: SvrId}
-            - '-BackendPort'
-      network_id: {Ref: BackendNetworkId}
-      security_groups:
-      - {Ref: BackendSecurityGroup}
-    Type: OS::Neutron::Port
   MongoVolume1:
     Properties:
       name:
@@ -227,7 +198,7 @@ Resources:
       key_name: {Ref: KeyName}
       networks:
         - {port: {Ref: PrimaryInterface}}
-        - {port: {Ref: BackendInterface}}
+        - {port: {Ref: BackendPortId}}
       user_data:
         Fn::Base64:
           Fn::Join:

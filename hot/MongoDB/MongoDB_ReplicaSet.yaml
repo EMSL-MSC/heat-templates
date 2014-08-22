@@ -71,15 +71,44 @@ Resources:
     Properties:
       name: ReplicaSetSrvGroupAntiAffinity
       policies: [ 'anti-affinity' ]
-    Type: OS::Nova::ServerGroup    
+    Type: OS::Nova::ServerGroup
+  ReplicaSetPort1:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: ClusterName}
+            - '-'
+            - {Ref: ReplicaSetName}
+            - '-BackendPort1'
+      fixed_ips:
+      - subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
+      security_groups:
+      - {Ref: BackendSecurityGroup}
+    Type: OS::Neutron::Port
+  ReplicaSetPort2:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: ClusterName}
+            - '-'
+            - {Ref: ReplicaSetName}
+            - '-BackendPort2'
+      fixed_ips:
+      - subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
+      security_groups:
+      - {Ref: BackendSecurityGroup}
+    Type: OS::Neutron::Port
   ReplicaSetMember1:
     Properties:
       Parameters:
         ClusterName: {Ref: ClusterName}
         SvrId: '1'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
-        BackendNetworkId: {Ref: BackendNetworkId}
-        BackendSubnetId: {Ref: BackendSubnetId}
+        BackendPortId: {Ref: ReplicaSetPort1}
         ExtraUserData:
           Fn::Join:
           - ''
@@ -93,7 +122,11 @@ Resources:
             - "\", members : ["
             - "{_id : 0, host:\"$HOSTNAME:27017\"},"
             - "{_id : 1, host:\""
-            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+            - Fn::Select:
+              - ip_address
+              - Fn::Select:
+                - '0'
+                - Fn::GetAtt: [ReplicaSetPort2, fixed_ips]
             - ":27017\"}"
             - "]};\n"
             - "rs.initiate(config);\n"
@@ -101,12 +134,15 @@ Resources:
             - "## Waiting until mongods have started\n"
             - "until nc -z $HOSTNAME 27017 ; do sleep 1 ; done\n"
             - "until nc -z "
-            - Fn::GetAtt: [ReplicaSetMember2, Outputs.ReplicaSetMemberName]
+            - Fn::Select:
+              - ip_address
+              - Fn::Select:
+                - '0'
+                - Fn::GetAtt: [ReplicaSetPort2, fixed_ips]
             - " 27017 ; do sleep 1 ; done\n"
             - "/usr/bin/mongo /tmp/replicaSetConfigInit.js > /tmp/replica-setup.log 2>&1\n"
             - {Ref: ReplicaSet1ExtraUserData}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
-        BackendSecurityGroup: {Ref: BackendSecurityGroup}
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
         KeyName: {Ref: KeyName}
@@ -128,8 +164,7 @@ Resources:
         ClusterName: {Ref: ClusterName}
         SvrId: '2'
         MongoDBYumRepo: {Ref: MongoDBYumRepo}
-        BackendNetworkId: {Ref: BackendNetworkId}
-        BackendSubnetId: {Ref: BackendSubnetId}
+        BackendPortId: {Ref: ReplicaSetPort2}
         ExtraUserData: echo foo; echo bar
         InstanceType: {Ref: InstanceType}
         InstanceZone: {Ref: InstanceZone}
@@ -140,7 +175,6 @@ Resources:
         PrimaryNetworkId: {Ref: PrimaryNetworkId}
         ReplicaSetName: {Ref: ReplicaSetName}
         PrimarySecurityGroup: {Ref: PrimarySecurityGroup}
-        BackendSecurityGroup: {Ref: BackendSecurityGroup}
         VolumeSize: {Ref: VolumeSize}
       TemplateURL:
         Fn::Join:

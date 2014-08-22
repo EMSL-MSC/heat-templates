@@ -78,8 +78,7 @@ Resources:
             - /$HOSTNAME
             - ":27017\");\n"
             - "EOF\n"
-            - "until mongo --eval 'var s = rs.status().myState; if (s == 1 || s == 2) {print(\"READY\","
-            - "s); quit(0)}; quit(1)' ; do sleep 1 ; done"
+            - "until nc -z localhost 13370 ; do cat /var/log/mongos.log; sleep 1 ; done\n"
             - "/usr/bin/mongo --port 13370 /tmp/shardInit.js > /tmp/shard-setup.log 2>&1\n"
             - "killall mongos\n"
       TemplateURL:
