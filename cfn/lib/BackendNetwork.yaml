@@ -12,15 +12,15 @@ Parameters:
     Description: Ip Prefix to use
     Type: String
   DynamicStart:
-    Default: 10
+    Default: '10'
     Description: Start of dynamic range
     Type: String
   DynamicEnd:
-    Default: 240
+    Default: '240'
     Description: End of dynamic range
     Type: String
   SubnetSize:
-    Default: 24
+    Default: '24'
     Description: Network size
     Type: String
   NetworkName:
