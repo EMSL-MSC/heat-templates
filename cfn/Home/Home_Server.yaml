@@ -1,0 +1,219 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Home Server
+Parameters:
+  PrimaryNetworkId: 
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: cloud
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  InstanceZone:
+    Default: nova
+    Description: AvailabilityZone for this instance
+    Type: String
+  Flavor:
+    Default: m1.small
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: sl7-osg-base
+    Description: Image of choice
+    Type: String
+  ServerId:
+    Description: Server Id
+    Type: String
+  StartupTimeout: 
+    Default: 1700
+    Description: How long to wait on node coming up
+    Type: Number
+  BackendNetworkId:
+    Description: Backend Network ID
+    Type: String
+  BackendSubnetId:
+    Description: Backend Subnet ID
+    Type: String
+  BackendSecurityGroup:
+    Description: Backend Security Group
+    Type: String
+  PrimarySecurityGroup:
+    Description: Backend Security Group
+    Type: String
+  ServerGroupId:
+    Description: Server Group Id
+    Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra UserData script
+    Type: String
+  Metadata:
+    Default: "{}"
+    Description: Extra metadata to attach to the instance.
+    Type: Json
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups: [{Ref: PrimarySecurityGroup}]
+    Type: OS::Neutron::Port
+  BackendInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - '-BackendPort'
+      fixed_ips:
+        - ip_address:
+            Fn::Join:
+              - ''
+              - - '10.0.101.'
+                - {Ref: ServerId}
+          subnet_id: {Ref: BackendSubnetId}
+      network_id: {Ref: BackendNetworkId}
+      security_groups: [{Ref: BackendSecurityGroup}]
+    Type: OS::Neutron::Port
+  Instance:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      scheduler_hints:
+        group: {Ref: ServerGroupId}
+      metadata: {Ref: Metadata}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+        - {port: {Ref: BackendInterface}}
+      user_data_format: RAW
+      user_data: {Ref: UserData}
+    Type: OS::Nova::Server
+  CloudConfig:
+    Type: OS::Heat::CloudConfig
+    Properties:
+      cloud_config:
+
+  UserData:
+    Type: OS::Heat::MultipartMime
+    Properties:
+      parts:
+        - config: {Ref: CloudConfig}
+        - config:
+            Fn::Replace:
+              - wc_url: {Ref: WaitHandleInstance}
+                IP_PREFIX: '10.0.101'
+                EXTRA_USER_DATA: {Ref: ExtraUserData}
+              - |
+                #!/bin/bash
+                yum update -y aws-cfn-bootstrap
+                ## Error reporting helper function
+                function error_exit
+                {
+                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
+                  exit 1
+                }
+                function trap_error
+                {
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
+                }
+                set -eu
+                trap 'trap_error "$?"' ERR
+
+                yum -y install corosync dlm nfs-utils
+                
+                cat > /etc/corosync/corosync.conf <<EOF
+                totem {
+                        version: 2
+                        secauth: off
+                        cluster_name: abc
+                        interface {
+                                ringnumber: 0
+                                bindnetaddr: 10.0.101.0
+                                mcastport: 5405
+                                ttl: 1
+                        }
+                        transport: udpu
+                }
+                
+                nodelist {
+                        node {
+                                ring0_addr: IP_PREFIX.10
+                                nodeid: 1
+                        }
+                        node {
+                                ring0_addr: IP_PREFIX.11
+                                nodeid: 2
+                        }
+                        node {
+                                ring0_addr: IP_PREFIX.12
+                                nodeid: 3
+                        }
+                }
+                
+                quorum {
+                        provider: corosync_votequorum
+                }
+                
+                logging {
+                        to_syslog: yes
+                }
+                EOF
+                systemctl enable corosync
+                systemctl disable firewalld
+                
+                mkdir -p /etc/dlm
+                cat > /etc/dlm/dlm.conf <<EOF
+                fence_all /bin/false
+                EOF
+                systemctl enable dlm
+                
+                rpm -Uvh ftp://ftp.icm.edu.pl/vol/rzm2/linux-scientificlinux/7x/external_products/extras/x86_64/python-itsdangerous-0.23-2.el7.noarch.rpm
+                yum install -y ceph-common
+                
+                rpm -Uvh http://ceph.com/rpm/rhel7/x86_64/kmod-libceph-3.10-0.1.20140702gitdc9ac62.el7.x86_64.rpm
+                rpm -Uvh http://ceph.com/rpm/rhel7/x86_64/kmod-rbd-3.10-0.1.20140702gitdc9ac62.el7.x86_64.rpm
+
+                yum install -y gfs2-utils
+
+                mkdir -p /export/home
+                mkdir -p /rawhome
+
+                cat >> /etc/exports <<EOF
+                /export */24(rw,fsid=0)
+                /export/home */24(fsid=1,rw,no_subtree_check,sync,root_squash)
+                EOF
+
+                echo "/rawhome/home/ /export/home none defaults,noauto,bind 0 0" >> /etc/fstab
+
+                sed -i 's/^\(RPCMOUNTDOPTS=\).*/\1"-p 892"/' /etc/sysconfig/nfs
+                sed -i 's/^\(RPCNFSDARGS=\).*/\1"-N 4 -N 2"/' /etc/sysconfig/nfs
+
+                systemctl enable rpcbind
+                systemctl disable nfs-server
+
+                ## Extra userdata
+                EXTRA_USER_DATA
+
+                #exportfs -avr
+                
+                ## CloudFormation signal that setup is complete
+                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+

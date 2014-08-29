@@ -1,0 +1,90 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Home Base Cluster
+Parameters:
+  PrimarySubnetId:
+    Description: Which subnet to use
+    Type: String
+  PrimaryNetworkId:
+    Description: Which network to use
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+Outputs:
+  BackendNetworkId:
+    Description: Network ID
+    Value:
+      Fn::GetAtt: [BackendNetwork, Outputs.NetworkId]
+  BackendSubnetId:
+    Description: Subnet ID
+    Value:
+      Fn::GetAtt: [BackendNetwork, Outputs.SubnetId]
+  PrimaryHomeSecurityGroupId:
+    Description: PrimaryHome Security Group ID
+    Value: {Ref: PrimaryHomeSecurityGroup}
+  BackendHomeSecurityGroupId:
+    Description: Backend Home Security Group ID
+    Value: {Ref: BackendHomeSecurityGroup}
+  HomeServerGroupId:
+    Description: Home Server Group ID
+    Value: {Ref: ServerGroup}
+Resources:
+  PrimaryHomeSecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - '-Primary'
+      description: Home Security Group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 111, protocol: tcp, port_range_max: 111}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 111, protocol: udp, port_range_max: 111}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 892, protocol: tcp, port_range_max: 892}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 892, protocol: udp, port_range_max: 892}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 2049, protocol: tcp, port_range_max: 2049}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 2049, protocol: udp, port_range_max: 2049}
+  BackendHomeSecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - '-Backend'
+      description: Home Security Group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 5405, protocol: udp, port_range_max: 5405}
+      - {remote_ip_prefix: 10.0.101.0/24, port_range_min: 1, protocol: udp, port_range_max: 65535}
+      - {remote_ip_prefix: 10.0.101.0/24, port_range_min: 1, protocol: tcp, port_range_max: 65535}
+  ServerGroup:
+    Properties:
+      name:
+        Ref: AWS::StackName
+      policies:
+        - anti-affinity
+    Type: OS::Nova::ServerGroup
+  BackendNetwork:
+    Properties:
+      Parameters:
+        DynamicStart: '200'
+        NetworkName:
+          Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - -HomeNet
+        SubnetName:
+          Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - -HomeSubnet
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/BackendNetwork.yaml"
+    Type: AWS::CloudFormation::Stack
