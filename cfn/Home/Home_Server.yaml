@@ -1,6 +1,9 @@
 HeatTemplateFormatVersion: '2012-12-12'
 Description: Home Server
 Parameters:
+  Name:
+    Description: ServerName
+    Type: String
   PrimaryNetworkId: 
     Description: PrimaryNetworkId
     Type: String
@@ -56,7 +59,7 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {Ref: 'AWS::StackName'}
+          - - {Ref: Name}
             - '-PrimaryPort'
       network_id: {Ref: PrimaryNetworkId}
       security_groups: [{Ref: PrimarySecurityGroup}]
@@ -66,7 +69,7 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {Ref: 'AWS::StackName'}
+          - - {Ref: Name}
             - '-BackendPort'
       fixed_ips:
         - ip_address:
@@ -83,7 +86,7 @@ Resources:
       name:
         Fn::Join:
           - ''
-          - - {Ref: 'AWS::StackName'}
+          - - {Ref: Name}
       availability_zone: {Ref: InstanceZone}
       image: {Ref: Image}
       flavor: {Ref: Flavor}
