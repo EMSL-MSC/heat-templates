@@ -169,6 +169,7 @@ Resources:
                 EOF
                 systemctl enable corosync
                 systemctl disable firewalld
+                systemctl stop firewalld
                 systemctl start corosync
                 
                 mkdir -p /etc/dlm
