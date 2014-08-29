@@ -169,12 +169,14 @@ Resources:
                 EOF
                 systemctl enable corosync
                 systemctl disable firewalld
+                systemctl start corosync
                 
                 mkdir -p /etc/dlm
                 cat > /etc/dlm/dlm.conf <<EOF
                 fence_all /bin/false
                 EOF
                 systemctl enable dlm
+                systemctl start dlm
                 
                 rpm -Uvh ftp://ftp.icm.edu.pl/vol/rzm2/linux-scientificlinux/7x/external_products/extras/x86_64/python-itsdangerous-0.23-2.el7.noarch.rpm
                 yum install -y ceph-common
