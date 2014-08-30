@@ -194,8 +194,8 @@ Resources:
                 mkdir -p /rawhome
 
                 cat >> /etc/exports <<EOF
-                /export */24(rw,fsid=0)
-                /export/home */24(fsid=1,rw,no_subtree_check,sync,root_squash)
+                /export *(rw,fsid=0)
+                /export/home *(fsid=1,rw,no_subtree_check,sync,root_squash)
                 EOF
 
                 echo "/rawhome/home/ /export/home none defaults,noauto,bind 0 0" >> /etc/fstab
