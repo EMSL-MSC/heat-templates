@@ -132,13 +132,13 @@ Resources:
                 EOF
                 for ZONE in ZONES; do
                     cat >> /etc/named.conf <<EOF
-                    zone "$ZONE." {
-                        type slave;
-                        file "/var/named/$ZONE";
-                        masters { MASTERIP; };
-                        allow-transfer { none; };
-                    };
-                    EOF
+                zone "$ZONE." {
+                    type slave;
+                    file "/var/named/$ZONE";
+                    masters { MASTER_IP; };
+                    allow-transfer { none; };
+                };
+                EOF
                 done
 
                 ## Extra userdata
