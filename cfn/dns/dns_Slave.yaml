@@ -1,0 +1,169 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: DNS Slave Server
+Parameters:
+  Name:
+    Description: ServerName
+    Type: String
+  PrimaryNetworkId: 
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: cloud
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  InstanceZone:
+    Default: nova
+    Description: AvailabilityZone for this instance
+    Type: String
+  Flavor:
+    Default: m1.small
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: sl7-osg-base
+    Description: Image of choice
+    Type: String
+  IpAddress:
+    Description: Floating Ip Address to assign
+    Type: String
+  Zones:
+    Description: List of zones to host. Space separated.
+    Type: String
+  MasterIp:
+    Description: Master server ip address
+    Type: String
+  StartupTimeout: 
+    Default: 1700
+    Description: How long to wait on node coming up
+    Type: Number
+  PrimarySecurityGroup:
+    Description: Backend Security Group
+    Type: String
+  ServerGroupId:
+    Description: Server Group Id
+    Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra UserData script
+    Type: String
+  Forwarders:
+    Description: DNS forwarder ip's. Semicolon separated.
+    Type: String
+  Metadata:
+    Default: "{}"
+    Description: Extra metadata to attach to the instance.
+    Type: Json
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups: [{Ref: PrimarySecurityGroup}]
+    Type: OS::Neutron::Port
+  Instance:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      scheduler_hints:
+        group: {Ref: ServerGroupId}
+      metadata: {Ref: Metadata}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data_format: RAW
+      user_data: {Ref: UserData}
+    Type: OS::Nova::Server
+  CloudConfig:
+    Type: OS::Heat::CloudConfig
+    Properties:
+      cloud_config:
+
+  UserData:
+    Type: OS::Heat::MultipartMime
+    Properties:
+      parts:
+        - config: {Ref: CloudConfig}
+        - config:
+            Fn::Replace:
+              - wc_url: {Ref: WaitHandleInstance}
+                EXTRA_USER_DATA: {Ref: ExtraUserData}
+                FORWARDERS: {Ref: Forwarders}
+                MASTER_IP: {Ref: MasterIp}
+                ZONES: {Ref: Zones}
+              - |
+                #!/bin/bash
+                yum update -y aws-cfn-bootstrap
+                ## Error reporting helper function
+                function error_exit
+                {
+                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
+                  exit 1
+                }
+                function trap_error
+                {
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
+                }
+                set -eu
+                trap 'trap_error "$?"' ERR
+
+                yum install -y bind bind-utils
+                chkconfig named on
+                chmod 770 /var/named
+
+                cat > /etc/named.conf <<"EOF"
+                options {
+                    recursion yes;
+                    dnssec-validation auto;
+                    allow-query { any; };
+                    allow-query-cache { any; };
+                    forwarders {
+                        FORWARDERS;
+                    };
+                };
+                EOF
+                for ZONE in ZONES; do
+                    cat >> /etc/named.conf <<EOF
+                    zone "$ZONE." {
+                        type slave;
+                        file "/var/named/$ZONE";
+                        masters { MASTERIP; };
+                        allow-transfer { none; };
+                    };
+                    EOF
+                done
+
+                ## Extra userdata
+                EXTRA_USER_DATA
+
+                /etc/init.d/named start
+
+                ## CloudFormation signal that setup is complete
+                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+  Floating-IP:
+    Properties:
+      NetworkInterfaceId:
+        Ref: PrimaryNetworkId
+      InstanceId:
+        Ref: Instance
+      EIP:
+        Ref: IpAddress
+    Type: AWS::EC2::EIPAssociation
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
