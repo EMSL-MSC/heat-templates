@@ -153,7 +153,6 @@ Resources:
                 ## CloudFormation signal that setup is complete
                 curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
   Floating-IP:
-    DependsOn: WaitConditionInstance
     Properties:
       NetworkInterfaceId:
         Ref: PrimaryNetworkId
