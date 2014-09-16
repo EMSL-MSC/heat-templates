@@ -141,6 +141,10 @@ Resources:
                 EOF
                 done
 
+                ## Already using security groups
+                chkconfig iptables off
+                service iptables stop
+
                 ## Extra userdata
                 EXTRA_USER_DATA
 
