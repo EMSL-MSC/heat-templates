@@ -59,6 +59,7 @@ Resources:
             yum:
               lvm2: []
               ntp: []
+              ntpdate: []
               '389-ds': []
               '389-admin': []
               xorg-x11-xauth: []
