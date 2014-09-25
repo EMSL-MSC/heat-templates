@@ -58,6 +58,7 @@ Resources:
           packages:
             yum:
               lvm2: []
+              ntp: []
               '389-ds': []
               '389-admin': []
               xorg-x11-xauth: []
@@ -121,6 +122,8 @@ Resources:
             - "NAME=\""
             - {Ref: Name}
             - "\"\n"
+            - "service ntpd start\n"
+            - "chkconfig ntpd on\n"
             - "lvchange /dev/$NAME-vg0/$NAME-data -a y || true\n"
             - "service iptables stop || true\n"
             - "chkconfig iptables off || true\n"
