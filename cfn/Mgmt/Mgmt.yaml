@@ -92,7 +92,7 @@ Resources:
             - " -r Instance --region "
             - {Ref: "AWS::Region"}
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
-            - "yum install -y python-ceilometerclient python-cinderclient python-glanceclient python-heatclient python-keystoneclient python-neutronclient python-novaclient python-openstackclient python-savannaclient python-swiftclient python-troveclient\n"
+            - "yum install -y python-ceilometerclient python-cinderclient python-glanceclient python-heatclient python-keystoneclient python-neutronclient python-novaclient python-openstackclient python-savannaclient python-swiftclient python-troveclient ansible\n"
             - "## Waiting for EBS mounts to become available\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "/etc/init.d/sshd stop || true \n"
