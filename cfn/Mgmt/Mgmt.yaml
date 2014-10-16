@@ -19,6 +19,10 @@ Parameters:
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
   KeyName: {Description: Name of an existing EC2 KeyPair
       to enable SSH access, Type: String}
+  VolumeName:
+     Default: mgmt
+     Description: Name of the volume
+     Type: String
   ExtraUserData: {Default: '', Description: Extra
       UserData script, Type: String}
   InstanceZone: {Default: 'nova', Description: AvailabilityZone for
@@ -92,11 +96,14 @@ Resources:
             - " -r Instance --region "
             - {Ref: "AWS::Region"}
             - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "VOLUMENAME=\""
+            - {Ref: ExtraUserData}
+            - "\n"
             - "yum install -y python-ceilometerclient python-cinderclient python-glanceclient python-heatclient python-keystoneclient python-neutronclient python-novaclient python-openstackclient python-savannaclient python-swiftclient python-troveclient ansible\n"
             - "## Waiting for EBS mounts to become available\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "/etc/init.d/sshd stop || true \n"
-            - "echo '/dev/mgmt-vg0/mgmt-data /srv ext4 defaults,auto,noatime 0 0'"
+            - "echo /dev/$VOLUMENAME-vg0/$VOLUMENAME-data' /srv ext4 defaults,auto,noatime 0 0'"
             - " | tee -a /etc/fstab\n"
             - "mount /srv\n"
             - "mv /etc/ssh /etc/ssh.orig\n"
@@ -105,6 +112,10 @@ Resources:
             - "ln -s /srv/home /home\n"
             - "ln -s /srv/etc/ssh /etc/ssh\n"
             - "sed -i '/password[ \t]*required[ \t]*pam_deny.so.*/asession    required    pam_mkhomedir.so' /etc/pam.d/password-auth-ac\n"
+            - "mkdir -p /srv/root/ansible/inventory\n"
+            - "if [ ! -f /srv/root/ansible/inventory/openstack_inventory.py ]; then\n"
+            - "    curl -o /srv/root/ansible/inventory/openstack_inventory.py https://raw.githubusercontent.com/lukaspustina/dynamic-inventory-for-ansible-with-openstack/master/openstack_inventory.py\n"
+            - "fi\n"
             - "if [ ! -f /srv/root/.ssh/authorized_keys.orig ]; then\n"
             - "    mv /srv/root/.ssh/authorized_keys /srv/root/.ssh/authorized_keys.orig || true\n"
             - "    cp -af /root/.ssh/authorized_keys /srv/root/.ssh\n"
