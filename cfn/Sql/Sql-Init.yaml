@@ -1,0 +1,92 @@
+# Heat template to initialize the the volume and populates it
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Database Server Create Volumes
+Outputs:
+  VolumeId:
+    Description: Volume ID
+    Value:
+     Fn::GetAtt: [Instance, VolumeId]
+Parameters:
+  VolumeName:
+    Description: Name for the volume
+    Type: String
+  PrimaryNetworkId:
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  InstanceZone:
+    Default: 'nova'
+    Description: AvailabilityZone for this instance
+    Type: String
+  Flavor:
+    Default: m1.small
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-6.5
+    Description: Image of choice
+    Type: String
+  StartupTimeout:
+    Default: '1700'
+    Description: How long to wait on node coming up
+    Type: Number
+  VolumeSize:
+    Default: '100'
+    Description: Volume size for each EBS volume
+    Type: Number
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn'
+    Description: Base URL where other templates live.
+    Type: String
+  Type:
+    Default: 'postgresql'
+    AllowedValues: ["postgresql", "mysql"]
+    Description: Which type of db to use.
+    Type: String
+Resources:
+  Instance:
+    Properties:
+      Parameters:
+        Name: {Ref: VolumeName}
+        Mnt: "/srv"
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        KeyName: {Ref: KeyName}
+        InstanceZone: {Ref: InstanceZone}
+        Flavor: {Ref: Flavor}
+        Image: {Ref: Image}
+        StartupTimeout: {Ref: StartupTimeout}
+        VolumeSize: {Ref: VolumeSize}
+        VolumeContainer: lvm
+        VolumeFormat: ext4
+        ExtraUserData:
+          Fn::Base64:
+            Fn::Replace:
+              - "@TYPE@": {Ref: Type}
+              - |
+                if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+                    /etc/init.d/sshd start
+                fi
+                ntpdate ntp.ubuntu.com
+                if [ "@TYPE@" = "postgresql" ]; then
+                    yum install -y postgresql-server
+                    mkdir /srv/postgresql
+                    chown postgres.postgres /srv/postgresql
+                    service postgresql initdb
+                    mv /var/lib/pgsql /srv/postgresql/lib
+                else
+                    yum install -y mariadb-galera-server
+                    mkdir /srv/mysql
+                    chown mysql.mysql /srv/mysql
+                    service mysqld start
+                    sleep 10
+                    service mysqld stop
+                    mv /var/lib/mysql /srv/mysql/lib
+                fi
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/lib/Volume-Init.yaml"
+    Type: AWS::CloudFormation::Stack
