@@ -121,6 +121,7 @@ Resources:
 
                 cat > /etc/named.conf <<"EOF"
                 options {
+                    managed-keys-directory "/var/named/dynamic";
                     recursion yes;
                     dnssec-validation auto;
                     allow-query { any; };
