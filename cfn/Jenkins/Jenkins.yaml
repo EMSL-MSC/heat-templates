@@ -1,0 +1,215 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Jenkins
+Parameters:
+  PrimaryNetworkId: 
+    Description: PrimaryNetworkId
+    Type: String
+  Name:
+    Description: Name of the server
+    Type: String
+  DNSName:
+    Description: DNS Name of the server
+    Type: String
+  KeyName:
+    Description: Name of an existing KeyPair to enable SSH access
+    Type: String
+  InstanceZone:
+    Description: AvailabilityZone for this instance
+    Type: String
+  Flavor:
+    Default: m1.large
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-7
+    Description: Image of choice
+    Type: String
+  StartupTimeout: 
+    Default: 2400
+    Description: How long to wait on node coming up
+    Type: Number
+  VolumeId:
+    Description: Volume where data lives
+    Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to setup a floating ip
+    Type: String
+  FloatingIpAddress:
+    Default: ""
+    Description: The floating ip address you would like to attach
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+Resources:
+  SecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: 'AWS::StackName'}
+          - '-SecurityGroup'
+      description: Jenkins Security Group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 80, protocol: tcp, port_range_max: 80}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 443, protocol: tcp, port_range_max: 443}
+  Floating-Ip:
+    Properties:
+      Parameters:
+        AssignFloatingIp: {Ref: AssignFloatingIp}
+        InstanceId: {Ref: Instance}
+        NetworkId: {Ref: PrimaryNetworkId}
+        IpAddress: {Ref: FloatingIpAddress}
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/FloatingIp.yaml"
+    Type: AWS::CloudFormation::Stack
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups: [{Ref: SecurityGroup}]
+    Type: OS::Neutron::Port
+  Instance:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: 'AWS::StackName'}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data_format: RAW
+      user_data: {Ref: UserData}
+    Type: OS::Nova::Server
+  CloudConfig:
+    Type: OS::Heat::CloudConfig
+    Properties:
+      cloud_config:
+
+  UserData:
+    Type: OS::Heat::MultipartMime
+    Properties:
+      parts:
+        - config: {Ref: CloudConfig}
+        - config:
+            Fn::Replace:
+              - wc_url: {Ref: WaitHandleInstance}
+                "@DNSNAME@": {Ref: DNSName}
+                "@NAME@": {Ref: Name}
+                "@EXTRAUSERDATA": {Ref: ExtraUserData}
+              - |
+                #!/bin/bash
+                yum update -y aws-cfn-bootstrap
+                ## Error reporting helper function
+                function error_exit
+                {
+                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
+                  exit 1
+                }
+                function trap_error
+                {
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
+                }
+                set -eu
+                trap 'trap_error "$?"' ERR
+
+                while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
+                echo '/dev/@NAME@-vg0/@NAME@-data /srv ext4 defaults,auto,noatime 0 0' | tee -a /etc/fstab
+                mount /srv
+
+                hostname @DNSNAME@
+                sed -i 's/HOSTNAME=.*/HOSTNAME='@DNSNAME@'/' /etc/sysconfig/network
+
+                ntpdate ntp.ubuntu.com
+                chkconfig ntpdate on
+                service ntpdate start
+
+                curl -o /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
+                rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+                yum install -y java-1.7.0-openjdk-headless httpd mod_ssl jenkins
+                
+                setsebool -P httpd_can_network_connect true
+                
+                systemctl start httpd jenkins
+                systemctl enable httpd jenkins
+                
+                MYIP=`curl 169.254.169.254/latest/meta-data/public-ipv4`
+                cat > /etc/httpd/conf.d/jenkins.conf <<EOF
+                NameVirtualHost *:80
+                NameVirtualHost *:443
+                
+                <VirtualHost *:80>
+                    ServerAdmin  webmaster@localhost
+                    Redirect permanent / https://$MYIP/
+                </VirtualHost>
+                
+                <VirtualHost *:443>
+                    SSLEngine on
+                    SSLCertificateFile /etc/pki/tls/certs/localhost.crt
+                    SSLCertificateKeyFile /etc/pki/tls/private/localhost.key
+                    ServerAdmin  webmaster@localhost
+                    ProxyRequests     Off
+                    ProxyPreserveHost On
+                    AllowEncodedSlashes NoDecode
+                    <Proxy *>
+                        Order deny,allow
+                        Allow from all
+                    </Proxy>
+                    ProxyPass         /  http://localhost:8080/ nocanon
+                    ProxyPassReverse  /  http://localhost:8080/
+                    ProxyPassReverse  /  http://$MYIP/
+                    RequestHeader set X-Forwarded-Proto "https"
+                    RequestHeader set X-Forwarded-Port "443"
+                </VirtualHost>
+                EOF
+                
+                curl -o /usr/bin/jenkins-cli.jar http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar
+                cat > /usr/bin/jenkins-cli <<"EOF"
+                #!/bin/bash
+                export JENKINS_URL=http://127.0.0.1:8080
+                exec java -classpath /usr/bin -jar /usr/bin/jenkins-cli.jar "$@"
+                EOF
+                chmod +x /usr/bin/jenkins-cli
+
+                jenkins-cli install-plugin git
+                jenkins-cli install-plugin jclouds-jenkins
+                jenkins-cli safe-restart
+                sleep 20
+                jenkins-cli version
+
+                ## Extra userdata
+                @EXTRAUSERDATA@
+
+                ## CloudFormation signal that setup is complete
+                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: Instance}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
