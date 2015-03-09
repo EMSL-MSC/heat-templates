@@ -126,11 +126,11 @@ Resources:
           Fn::Join:
           - ''
           - - "#!/bin/bash\n"
-            - "yum update -y aws-cfn-bootstrap\n"
+            - "yum install -y curl\n"
             - "## Error reporting helper function\n"
             - "function error_exit\n"
             - "{\n"
-            - "   /opt/aws/bin/cfn-signal -e 1 -r \"$1\" '"
+            - "   curl -X PUT -H 'Content-Type:' --data-binary '{\"Status\": \"FAILURE\", \"Reason\": \"'\"$1\"'\", \"Data\": \"Application has completed configuration.\", \"UniqueId\": \"0000\"}' '"
             - {Ref: WaitHandleInstance}
             - "'\n"
             - "   exit 1\n"
