@@ -133,7 +133,7 @@ Resources:
                 set -eu
                 trap 'trap_error "$?"' ERR
 
-                yum install -y lvm2
+                yum install -y lvm2 ntpdate
                 systemctl enable lvm2-lvmetad || true
                 systemctl start lvm2-lvmetad || true
                 while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
@@ -145,9 +145,9 @@ Resources:
                 hostname @DNSNAME@
                 sed -i 's/HOSTNAME=.*/HOSTNAME='@DNSNAME@'/' /etc/sysconfig/network
 
-                ntpdate ntp.ubuntu.com
+                ntpdate ntp.ubuntu.com || true
                 chkconfig ntpdate on
-                service ntpdate start
+                service ntpdate start || true
 
                 curl -o /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
                 rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
@@ -155,9 +155,7 @@ Resources:
                 
                 setsebool -P httpd_can_network_connect true
                 
-                systemctl start httpd jenkins
                 systemctl enable httpd jenkins
-                
                 MYIP=`curl 169.254.169.254/latest/meta-data/public-ipv4`
                 cat > /etc/httpd/conf.d/jenkins.conf <<EOF
                 NameVirtualHost *:80
@@ -187,6 +185,10 @@ Resources:
                     RequestHeader set X-Forwarded-Port "443"
                 </VirtualHost>
                 EOF
+
+                systemctl start httpd jenkins
+                
+                sleep 30
                 
                 curl -o /usr/bin/jenkins-cli.jar http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar
                 cat > /usr/bin/jenkins-cli <<"EOF"
@@ -196,10 +198,6 @@ Resources:
                 EOF
                 chmod +x /usr/bin/jenkins-cli
 
-                jenkins-cli install-plugin git
-                jenkins-cli install-plugin jclouds-jenkins
-                jenkins-cli safe-restart
-                sleep 20
                 jenkins-cli version
 
                 ## Extra userdata
