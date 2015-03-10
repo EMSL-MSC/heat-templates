@@ -199,7 +199,7 @@ Resources:
             - "  cryptsetup luksClose $NAME\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
-            - "curl -X PUT -H 'Content-Type:' --data-binary '{\"Status\": \"SUCCESS\", \"Reason\": \"'\"$1\"'\", \"Data\": \"Application has completed configuration.\", \"UniqueId\": \"0001\"}' '"
+            - "curl -X PUT -H 'Content-Type:' --data-binary '{\"Status\": \"SUCCESS\", \"Reason\": \"Configuration Complete\", \"Data\": \"Application has completed configuration.\", \"UniqueId\": \"0001\"}' '"
             - {Ref: WaitHandleInstance}
             - "'\n"
     Type: OS::Nova::Server
