@@ -116,7 +116,7 @@ Resources:
               - wc_url: {Ref: WaitHandleInstance}
                 "@DNSNAME@": {Ref: DNSName}
                 "@NAME@": {Ref: Name}
-                "@EXTRAUSERDATA": {Ref: ExtraUserData}
+                "@EXTRAUSERDATA@": {Ref: ExtraUserData}
               - |
                 #!/bin/bash
                 yum update -y aws-cfn-bootstrap
