@@ -142,6 +142,8 @@ Resources:
                 echo '/srv/jenkins/log /var/log/jenkins none bind,defaults,auto 0 0' | tee -a /etc/fstab
                 pvscan || true
                 vgchange -a y || true
+                mkdir -p /var/lib/jenkins
+                mkdir -p /var/log/jenkins
                 mount /srv
                 mount /var/lib/jenkins
                 mount /var/log/jenkins
