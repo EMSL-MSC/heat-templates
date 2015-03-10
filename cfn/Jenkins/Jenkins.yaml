@@ -138,9 +138,13 @@ Resources:
                 systemctl start lvm2-lvmetad || true
                 while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
                 echo '/dev/@NAME@-vg0/@NAME@-data /srv ext4 defaults,auto,noatime 0 0' | tee -a /etc/fstab
+                echo '/srv/jenkins/lib /var/lib/jenkins none bind,defaults,auto 0 0' | tee -a /etc/fstab
+                echo '/srv/jenkins/log /var/log/jenkins none bind,defaults,auto 0 0' | tee -a /etc/fstab
                 pvscan || true
                 vgchange -a y || true
                 mount /srv
+                mount /var/lib/jenkins
+                mount /var/log/jenkins
 
                 hostname @DNSNAME@
                 sed -i 's/HOSTNAME=.*/HOSTNAME='@DNSNAME@'/' /etc/sysconfig/network
@@ -186,6 +190,7 @@ Resources:
                 </VirtualHost>
                 EOF
 
+                systemctl stop jenkins || true
                 systemctl start httpd jenkins
                 
                 sleep 30
