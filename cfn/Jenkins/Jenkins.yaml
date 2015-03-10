@@ -133,8 +133,13 @@ Resources:
                 set -eu
                 trap 'trap_error "$?"' ERR
 
+                yum install -y lvm2
+                systemctl enable lvm2-lvmetad || true
+                systemctl start lvm2-lvmetad || true
                 while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
                 echo '/dev/@NAME@-vg0/@NAME@-data /srv ext4 defaults,auto,noatime 0 0' | tee -a /etc/fstab
+                pvscan || true
+                vgchange -a y || true
                 mount /srv
 
                 hostname @DNSNAME@
