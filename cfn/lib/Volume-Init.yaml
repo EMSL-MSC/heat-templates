@@ -105,13 +105,6 @@ Resources:
             - "/FloatingIp.yaml"
     Type: AWS::CloudFormation::Stack
   Instance:
-    Metadata:
-      AWS::CloudFormation::Init:
-        config:
-          packages:
-            yum:
-              mdadm: []
-              lvm2: []
     Properties:
       metadata: {Ref: Metadata}
       availability_zone: {Ref: InstanceZone}
@@ -141,12 +134,7 @@ Resources:
             - "}\n"
             - "set -eu\n"
             - "trap 'trap_error \"$?\"' ERR\n"
-            - "## Initialize CloudFormation bits\n"
-            - "/opt/aws/bin/cfn-init -s "
-            - {Ref: "AWS::StackName"}
-            - " -r Instance --region "
-            - {Ref: "AWS::Region"}
-            - " > /tmp/cfn-init.log 2>&1 || error_exit $(</tmp/cfn-init.log)\n"
+            - "yum install -y mdadm lvm2\n"
             - "## Waiting for EBS mounts to become available\n"
             - "while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done\n"
             - "NAME="
@@ -211,7 +199,7 @@ Resources:
             - "  cryptsetup luksClose $NAME\n"
             - "fi\n"
             - "## CloudFormation signal that setup is complete\n"
-            - "/opt/aws/bin/cfn-signal -e 0 -r \"ConfigServer setup complete\" '"
+            - "curl -X PUT -H 'Content-Type:' --data-binary '{\"Status\": \"SUCCESS\", \"Reason\": \"'\"$1\"'\", \"Data\": \"Application has completed configuration.\", \"UniqueId\": \"0001\"}' '"
             - {Ref: WaitHandleInstance}
             - "'\n"
     Type: OS::Nova::Server
