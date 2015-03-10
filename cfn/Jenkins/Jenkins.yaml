@@ -44,6 +44,10 @@ Parameters:
     Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
     Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra User Data
+    Type: String
 Resources:
   SecurityGroup:
     Type: OS::Neutron::SecurityGroup
