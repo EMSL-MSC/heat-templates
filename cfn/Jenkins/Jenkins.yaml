@@ -195,9 +195,13 @@ Resources:
                 systemctl stop jenkins || true
                 systemctl start httpd jenkins
                 
-                sleep 30
-                
-                curl -o /usr/bin/jenkins-cli.jar http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar
+                while :
+                do
+                  sleep 10
+                  curl -f -o /usr/bin/jenkins-cli.jar http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar || continue
+                  grep 'Please wait while Jenkins is getting ready' /usr/bin/jenkins-cli.jar > /dev/null || break
+                done 
+
                 cat > /usr/bin/jenkins-cli <<"EOF"
                 #!/bin/bash
                 export JENKINS_URL=http://127.0.0.1:8080
