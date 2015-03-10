@@ -70,10 +70,10 @@ Resources:
                 mount --bind /srv/jenkins/log /var/log/jenkins/
                 mount --bind /srv/jenkins/lib /var/lib/jenkins/
                 systemctl start jenkins
-                sleep 30
+                sleep 60
                 export JENKINS_URL=http://127.0.0.1:8080
                 curl -o jenkins-cli.jar http://127.0.0.1:8080/jnlpJars/jenkins-cli.jar
-                java -jar jenkins-cli.jar jenkins-cli install-plugin git
+                java -jar jenkins-cli.jar install-plugin git
                 java -jar jenkins-cli.jar install-plugin jclouds-jenkins
                 java -jar jenkins-cli.jar shutdown || true
                 sleep 30
