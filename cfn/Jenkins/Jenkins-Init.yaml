@@ -40,6 +40,10 @@ Parameters:
     Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn'
     Description: Base URL where other templates live.
     Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra User Data
+    Type: String
 Resources:
   Instance:
     Properties:
@@ -58,7 +62,7 @@ Resources:
         ExtraUserData:
           Fn::Base64:
             Fn::Replace:
-              - "@placeholder@": ''
+              - "@EXTRAUSERDATA@": {Ref: ExtraUserData}
               - |
                 mkdir -p /srv/jenkins/log
                 mkdir -p /srv/jenkins/lib
@@ -77,6 +81,8 @@ Resources:
                 java -jar jenkins-cli.jar install-plugin jclouds-jenkins
                 java -jar jenkins-cli.jar shutdown || true
                 sleep 30
+                ## Extra userdata
+                @EXTRAUSERDATA@
                 umount /var/log/jenkins/
                 umount /var/lib/jenkins/
       TemplateURL:
