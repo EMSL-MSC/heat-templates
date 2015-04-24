@@ -23,9 +23,6 @@ Parameters:
     Default: centos-7
     Description: Image of choice
     Type: String
-  Zones:
-    Description: List of zones to host. Space separated.
-    Type: String
   StartupTimeout: 
     Default: 1700
     Description: How long to wait on node coming up
