@@ -157,7 +157,7 @@ Resources:
 
                 curl -o /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
                 rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
-                yum install -y java-1.7.0-openjdk-headless httpd mod_ssl jenkins
+                yum install -y java-1.7.0-openjdk-headless httpd mod_ssl jenkins dejavu-sans-fonts
                 
                 setsebool -P httpd_can_network_connect true
                 
