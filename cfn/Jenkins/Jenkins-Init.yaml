@@ -68,7 +68,7 @@ Resources:
                 mkdir -p /srv/jenkins/lib
                 curl -o /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
                 rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
-                yum install -y java-1.7.0-openjdk-headless jenkins
+                yum install -y java-1.7.0-openjdk-headless jenkins dejavu-sans-fonts
                 chown --recursive jenkins.jenkins /srv/jenkins
                 chmod --recursive 770 /srv/jenkins/
                 mount --bind /srv/jenkins/log /var/log/jenkins/
