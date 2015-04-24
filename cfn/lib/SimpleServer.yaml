@@ -1,0 +1,114 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Simple Server
+Parameters:
+  Name:
+    Description: ServerName
+    Type: String
+  PrimaryNetworkId: 
+    Description: PrimaryNetworkId
+    Type: String
+  KeyName:
+    Default: cloud
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: String
+  InstanceZone:
+    Default: nova
+    Description: AvailabilityZone for this instance
+    Type: String
+  Flavor:
+    Default: m1.small
+    Description: Flavor to boot
+    Type: String
+  Image:
+    Default: centos-7
+    Description: Image of choice
+    Type: String
+  Zones:
+    Description: List of zones to host. Space separated.
+    Type: String
+  StartupTimeout: 
+    Default: 1700
+    Description: How long to wait on node coming up
+    Type: Number
+  PrimarySecurityGroup:
+    Description: Backend Security Group
+    Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra UserData script
+    Type: String
+  Metadata:
+    Default: "{}"
+    Description: Extra metadata to attach to the instance.
+    Type: Json
+Resources:
+  PrimaryInterface:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+            - '-PrimaryPort'
+      network_id: {Ref: PrimaryNetworkId}
+      security_groups: [{Ref: PrimarySecurityGroup}]
+    Type: OS::Neutron::Port
+  Instance:
+    Properties:
+      name:
+        Fn::Join:
+          - ''
+          - - {Ref: Name}
+      availability_zone: {Ref: InstanceZone}
+      image: {Ref: Image}
+      flavor: {Ref: Flavor}
+      key_name: {Ref: KeyName}
+      metadata: {Ref: Metadata}
+      networks:
+        - {port: {Ref: PrimaryInterface}}
+      user_data_format: RAW
+      user_data: {Ref: UserData}
+    Type: OS::Nova::Server
+  CloudConfig:
+    Type: OS::Heat::CloudConfig
+    Properties:
+      cloud_config:
+
+  UserData:
+    Type: OS::Heat::MultipartMime
+    Properties:
+      parts:
+        - config: {Ref: CloudConfig}
+        - config:
+            Fn::Replace:
+              - wc_url: {Ref: WaitHandleInstance}
+                EXTRA_USER_DATA: {Ref: ExtraUserData}
+              - |
+                #!/bin/bash
+                ## Error reporting helper function
+                function error_exit
+                {
+                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
+                  exit 1
+                }
+                function trap_error
+                {
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
+                }
+                set -eu
+                trap 'trap_error "$?"' ERR
+
+                ## Extra userdata
+                EXTRA_USER_DATA
+
+                ## CloudFormation signal that setup is complete
+                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+  WaitConditionInstance:
+    DependsOn: Instance
+    Properties:
+      Handle: {Ref: WaitHandleInstance}
+      Timeout: {Ref: StartupTimeout}
+    Type: AWS::CloudFormation::WaitCondition
+  WaitHandleInstance:
+    Properties: {}
+    Type: AWS::CloudFormation::WaitConditionHandle
+
