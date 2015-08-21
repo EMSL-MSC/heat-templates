@@ -1,0 +1,19 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create SecurityGroup
+Outputs:
+  SecurityGroupId:
+    Description: Security Group ID
+#FIXME set to ""
+    Value: {Ref: Rules}
+Parameters:
+  Name:
+    Description: Name
+    Type: String
+  Rules:
+    Description: Rules
+    Type: Json
+Resources:
+  SecurityGroup:
+    Type: OS::Heat::RandomString
+    Properties:
+      length: 1

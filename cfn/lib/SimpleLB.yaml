@@ -1,0 +1,102 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Simple LB
+Parameters:
+  SubnetId:
+    Description: Which subnet to use
+    Type: String
+  NetworkId:
+    Description: Which network to use
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+  LBIpId:
+    Default:
+    Description: What floating ip id to use for the read only load balancer
+    Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use True to setup a floating ip
+    Type: String
+  Name:
+    Description: Name
+    Type: String
+  Port:
+    Default: 80
+    Description: Which port to use
+    Type: Number
+Outputs:
+  ServerGroupId:
+    Description: Server Group ID
+    Value: {Ref: ServerGroup}
+  LoadBalancerId:
+    Description: Load Balancer ID
+    Value: {Ref: LoadBalancer}
+  LoadBalancerVipAddr:
+    Description: Load Balancer Ip Address
+    Value:
+      Fn::Select:
+        - address
+        - Fn::GetAtt: [LoadBalancer, vip]
+  LoadBalancerVipId:
+    Description: Load Balancer Vip ID
+    Value:
+      Fn::Select:
+        - id
+        - Fn::GetAtt: [LoadBalancer, vip]
+  LoadBalancerVipPort:
+    Description: Load Balancer Vip Port ID
+    Value:
+      Fn::Select:
+        - port_id
+        - Fn::GetAtt: [LoadBalancer, vip]
+Resources:
+  ServerGroup:
+    Properties:
+      name:
+        Ref: Name
+      policies:
+        - anti-affinity
+    Type: OS::Nova::ServerGroup
+  LoadBalancerMonitor:
+    Type: OS::Neutron::HealthMonitor
+    Properties: 
+      delay: 60
+      max_retries: 5
+      timeout: 10
+      type: TCP
+  LoadBalancer:
+    Type: OS::Neutron::Pool
+    Properties:
+      name:
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+          - -LoadBalancer
+      protocol: TCP
+      subnet_id: {Ref: SubnetId}
+      lb_method: LEAST_CONNECTIONS
+      monitors:
+      - {Ref: LoadBalancerMonitor}
+      vip:
+        protocol_port: {Ref: Port}
+        subnet: {Ref: SubnetId}
+  LoadBalancerFloatingIp:
+    Properties:
+      Parameters:
+        AssignFloatingIp: {Ref: AssignFloatingIp}
+        Type: "port_id"
+        FloatingIpId: {Ref: LBIpId}
+        PortId: 
+          Fn::Select:
+            - port_id
+            - Fn::GetAtt: [LoadBalancer, vip]
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/FloatingIp.yaml"
+    Type: AWS::CloudFormation::Stack
