@@ -69,11 +69,10 @@ Resources:
   ServerGroup:
     Properties:
       name:
-        Ref:
-          Fn::Join:
-          - ''
-          - - {Ref: Name}
-            - -ServerGroup
+        Fn::Join:
+        - ''
+        - - {Ref: Name}
+          - -ServerGroup
       policies:
         - anti-affinity
     Type: OS::Nova::ServerGroup
