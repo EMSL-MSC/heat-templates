@@ -27,6 +27,15 @@ Parameters:
     Default: 80
     Description: Which port to use
     Type: Number
+  SecurityGroupPorts:
+    Default: '22'
+    Description: Ports to allow on the SecurityGroup
+    Type: String
+  CreateSecurityGroup:
+    AllowedValues: ["True", "False"]
+    Default: "True"
+    Description: Use True to setup a Security Group
+    Type: String
 Outputs:
   ServerGroupId:
     Description: Server Group ID
@@ -52,11 +61,19 @@ Outputs:
       Fn::Select:
         - port_id
         - Fn::GetAtt: [LoadBalancer, vip]
+  SecurityGroupId:
+    Description: Security Group ID
+    Value:
+      Fn::GetAtt: [SecurityGroup, Outputs.SecurityGroupId]
 Resources:
   ServerGroup:
     Properties:
       name:
-        Ref: Name
+        Ref:
+          Fn::Join:
+          - ''
+          - - {Ref: Name}
+            - -ServerGroup
       policies:
         - anti-affinity
     Type: OS::Nova::ServerGroup
@@ -99,4 +116,21 @@ Resources:
           - ''
           - - {Ref: BaseURL}
             - "/FloatingIp.yaml"
+    Type: AWS::CloudFormation::Stack
+  SecurityGroup:
+    Properties:
+      Parameters:
+        CreateSecurityGroup: {Ref: CreateSecurityGroup}
+        SimplePorts: {Ref: SecurityGroupPorts}
+        BaseURL: {Ref: BaseURL}
+        Name:
+          Fn::Join:
+          - ''
+          - - {Ref: Name}
+            - -LoadBalancer
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/SecurityGroup.yaml"
     Type: AWS::CloudFormation::Stack
