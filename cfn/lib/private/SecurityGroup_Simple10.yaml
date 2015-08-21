@@ -1,0 +1,82 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create SecurityGroup
+Outputs:
+  SecurityGroupId:
+    Description: Security Group ID
+    Value: {Ref: SecurityGroup}
+Parameters:
+  Name:
+    Description: Name
+    Type: String
+  Rules:
+    Description: Rules
+    Type: Json
+  SimplePorts:
+    Description: SimplePorts
+    Type: Json
+Resources:
+  SecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name: {Ref: Name}
+      rules:
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['0', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['0', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['1', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['1', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['2', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['2', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['3', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['3', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['4', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['4', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['5', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['5', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['6', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['6', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['7', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['7', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['8', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['8', {Ref: SimplePorts}]
+        - remote_ip_prefix: '0.0.0.0/0'
+          protocol: tcp
+          port_range_min:
+            Fn::Select: ['9', {Ref: SimplePorts}]
+          port_range_max:
+            Fn::Select: ['9', {Ref: SimplePorts}]

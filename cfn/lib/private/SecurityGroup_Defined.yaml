@@ -3,19 +3,20 @@ Description: Create SecurityGroup
 Outputs:
   SecurityGroupId:
     Description: Security Group ID
-    Value: ""
+    Value: {Ref: SecurityGroup}
 Parameters:
   Name:
     Description: Name
     Type: String
   Rules:
     Description: Rules
-    Type: String
+    Type: Json
   SimplePorts:
-    Description: Rules
+    Description: SimplePorts
     Type: String
 Resources:
   SecurityGroup:
-    Type: OS::Heat::RandomString
+    Type: OS::Neutron::SecurityGroup
     Properties:
-      length: 1
+      name: {Ref: Name}
+      rules: {Ref: Rules}

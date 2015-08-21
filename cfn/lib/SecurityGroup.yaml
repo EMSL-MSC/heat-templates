@@ -1,0 +1,104 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Security Group
+Outputs:
+  SecurityGroupId:
+    Description: Security Group ID
+    Value:
+      "Fn::GetAtt": [SecurityGroup, Outputs.SecurityGroupId]
+Parameters:
+  Name:
+    Default: ''
+    Description: Name
+    Type: String
+  SimplePorts:
+    Default: ''
+    Description: Ports to allow if Type=Simple
+    Type: String
+  Rules:
+    Default: ''
+    Description: Rules to use if Type=Raw
+    Type: Json
+  Type:
+    AllowedValues: ["Simple", "Raw"]
+    Default: "Simple"
+    Description: Which type of Security Group to use
+    Type: String
+  CreateSecurityGroup:
+    AllowedValues: ["True", "False"]
+    Default: "True"
+    Description: Use True to setup a Security Group
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+Mappings:
+  SecurityGroupTemplates:
+    "Raw-True-1": {URL: "/private/SecurityGroup_Defined.yaml"}
+    "Raw-False-1": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-1": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-2": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-3": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-4": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-5": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-6": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-7": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-8": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-9": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-False-10": {URL: "/private/SecurityGroup_None.yaml"}
+    "Simple-True-1": {URL: "/private/SecurityGroup_Simple1.yaml"}
+    "Simple-True-2": {URL: "/private/SecurityGroup_Simple2.yaml"}
+    "Simple-True-3": {URL: "/private/SecurityGroup_Simple3.yaml"}
+    "Simple-True-4": {URL: "/private/SecurityGroup_Simple4.yaml"}
+    "Simple-True-5": {URL: "/private/SecurityGroup_Simple5.yaml"}
+    "Simple-True-6": {URL: "/private/SecurityGroup_Simple6.yaml"}
+    "Simple-True-7": {URL: "/private/SecurityGroup_Simple7.yaml"}
+    "Simple-True-8": {URL: "/private/SecurityGroup_Simple8.yaml"}
+    "Simple-True-9": {URL: "/private/SecurityGroup_Simple9.yaml"}
+    "Simple-True-10": {URL: "/private/SecurityGroup_Simple10.yaml"}
+  NumberOfEntriesTemplates:
+    "x": {"C":"1"}
+    "xx": {"C":"2"}
+    "xxx": {"C":"3"}
+    "xxxx": {"C":"4"}
+    "xxxxx": {"C":"5"}
+    "xxxxxx": {"C":"6"}
+    "xxxxxxx": {"C":"7"}
+    "xxxxxxxx": {"C":"8"}
+    "xxxxxxxxx": {"C":"9"}
+    "xxxxxxxxxx": {"C":"10"}
+Resources:
+  SecurityGroup:
+    Properties:
+      Parameters:
+        Name: {Ref: Name}
+        Rules: {ref: Rules}
+        SimplePort:
+          Fn::Join:
+          - ''
+          - - '['
+            - {Ref: SimplePorts}
+            - ']'
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - Fn::FindInMap:
+              - SecurityGroupTemplates
+              - Fn::Join:
+                - ''
+                - - {Ref: Type}
+                  - '-'
+                  - {Ref: CreateSecurityGroup}
+                  - '-'
+                  - Fn::FindInMap:
+                    - NumberOfEntriesTemplates
+                    - Fn::Join:
+                      - ''
+                      - - x
+                        - Fn::Replace:
+                          - {' ': '', '0': '', '1': '', '2':'', '3':'', '4':'', '5':'', '6':'', '7':'', '8':'', '9':'', ',':'x'}
+                          - {Ref: SimplePorts}
+                    - 'C'
+              - URL
+    Type: AWS::CloudFormation::Stack
