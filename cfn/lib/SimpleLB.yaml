@@ -126,7 +126,7 @@ Resources:
           Fn::Join:
           - ''
           - - {Ref: Name}
-            - -LoadBalancer
+            - -SecurityGroup
       TemplateURL:
           Fn::Join:
           - ''
