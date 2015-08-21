@@ -73,7 +73,7 @@ Resources:
       Parameters:
         Name: {Ref: Name}
         Rules: {ref: Rules}
-        SimplePort:
+        SimplePorts:
           Fn::Join:
           - ''
           - - '['
