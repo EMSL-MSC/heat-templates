@@ -11,7 +11,8 @@ Parameters:
     Type: String
   Rules:
     Description: Rules
-    Type: Json
+#FIXME set back to Json
+    Type: String
 Resources:
   SecurityGroup:
     Type: OS::Heat::RandomString
