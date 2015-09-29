@@ -12,7 +12,7 @@ Parameters:
     Description: Base URL where other templates live.
     Type: String
   LBIpId:
-    Default:
+    Default: ""
     Description: What floating ip id to use for the read only load balancer
     Type: String
   AssignFloatingIp:
