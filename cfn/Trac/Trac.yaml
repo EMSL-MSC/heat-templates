@@ -9,7 +9,7 @@ Outputs:
       - ip_address
       - Fn::Select:
         - '0'
-        - Fn::GetAtt: [BackendInterface, fixed_ips]
+        - Fn::GetAtt: [PrimaryInterface, fixed_ips]
   Id:
     Description: Instance Id
     Value:
