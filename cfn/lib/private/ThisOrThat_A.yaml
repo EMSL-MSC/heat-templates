@@ -1,0 +1,19 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Select A
+Outputs:
+  val:
+    Description: Value selected
+    Value: {Ref: a}
+Parameters:
+  a:
+    Description: a value
+    Type: String
+  b:
+    Description: b value
+    Type: String
+Resources:
+#Heat needs at least one resource. Create a resource that costs next to nothing.
+  ReplicationPw:
+    Type: OS::Heat::RandomString
+    Properties:
+      length: 1
