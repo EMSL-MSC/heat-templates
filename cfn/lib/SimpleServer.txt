@@ -1,0 +1,69 @@
+The SimpleServer template is intended to make it very easy to launch a simplistic server with some simple to use, but advanced features.
+
+It has the following features:
+ * One Server.
+ * One Network Card.
+ * One Security Group, (Precreated or created from Parameters).
+ * An optional Floating IP.
+ * Distro neutral hooks for install time and first reboot.
+ * A Wait Condition is provided so that you know exactly what breaks, or when the machine is finished successfully deploying.
+
+Feature walk through:
+
+For customizing the Instance, add bash shell lines to the ExtraUserData field.
+
+If you must reboot the Server but want to continue further customizing it after the reboot, do it such as:
+ * RebootAfter="True"
+ * RebootExtraUserData="echo some more script here"
+
+For Security Groups, you can specify an existing group by:
+ * PrimarySecurityGroup=<your_name_or_id_here>
+Or you can create one easily by specifying a comma separated string:
+ * CreateSecurityGroup="True"
+ * SecurityGroupSimplePorts="22,80,443"
+Or you can pass a JSON description of the security group directly through:
+ * CreateSecurityGroup="True"
+ * SecurityGroupType=Raw
+ * SecurityGroupRules={...}
+
+For specifying a Floating IP, it can be done by IP:
+ * AssignFloatingIp="True"
+ * FlotingIpType=instance_ip
+ * FloatingIpAddress=10.0.0.190
+Or by FloatingIpID:
+ * AssignFloatingIp="True"
+ * FlotingIpType=port_id
+ * FloatingIpId=<floating_ip_uuid_here>
+
+Miscellaneous features:
+ * RebootRequiredService - If you want your RebootExtraData script to run after a particular systemd service. For example 'docker'.
+ * BaseURL - This template depends on other templates. If you want to mirror the templates, this allows you to point at your own mirror.
+ * Metadata - A JSON encoded chunk of Nova metadata. Useful for specifying ServerGroups or other metadata.
+
+Example environment files:
+
+A very simple server.env:
+parameters:
+  PrimaryNetworkId: 118a852f-2d35-427d-9226-8a8ff1efea8f
+  KeyName: cloud
+  InstanceZone: nova
+  Flavor: m1.small
+  Image: centos-7
+  ExtraUserData: "echo I live > /tmp/hello.txt"
+
+Deploying a docker based webserver, setup an appropriate security group, and attach a floating ip:
+parameters:
+  PrimaryNetworkId: 118a852f-2d35-427d-9226-8a8ff1efea8f
+  KeyName: cloud
+  InstanceZone: nova
+  Flavor: m1.small
+  Image: centos-7
+  AssignFloatingIp: "True"
+  FloatingIpAddress: 10.0.0.190
+  CreateSecurityGroup: "True"
+  SecurityGroupSimplePorts: "22,80,443"
+  ExtraUserData: "yum install -y docker; systemctl enable docker"
+  RebootAfter: "True"
+  RebootRequiredService: docker
+  RebootExtraUserData: "docker run --net=host -d nginx:1.10-alpine"
+

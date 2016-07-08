@@ -28,27 +28,174 @@ Parameters:
     Description: How long to wait on node coming up
     Type: Number
   PrimarySecurityGroup:
-    Description: Backend Security Group
+    Default: default
+    Description: Security Group to use
     Type: String
   ExtraUserData:
     Default: ''
     Description: Extra UserData script
     Type: String
+  RebootExtraUserData:
+    Default: ''
+    Description: Extra UserData script to call after the reboot.
+    Type: String
   Metadata:
     Default: "{}"
     Description: Extra metadata to attach to the instance.
     Type: Json
+  FloatingIpAddress:
+    Default: '-1'
+    Description: The floating ip address you would like to attach
+    Type: String
+  FloatingIpId:
+    Default: '-1'
+    Description: The floating ip id
+    Type: String
+  AssignFloatingIp:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to setup a floating ip
+    Type: String
+  FloatingIpType:
+    AllowedValues: ["instance_ip", "port_id"]
+    Default: "instance_ip"
+    Description: How to configure. instance_ip or port_id.
+    Type: String
+  SecurityGroupSimplePorts:
+    Default: ''
+    Description: Ports to allow if SecurityGroupType=Simple
+    Type: String
+  SecurityGroupRules:
+    Default: ''
+    Description: Rules to use if SecurityGroupType=Raw
+    Type: Json
+  SecurityGroupType:
+    AllowedValues: ["Simple", "Raw"]
+    Default: "Simple"
+    Description: Which type of Security Group to use
+    Type: String
+  CreateSecurityGroup:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use True to setup a Security Group
+    Type: String
+  RebootAfter:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use True to reboot after setup.
+    Type: String
+  AutoFinish:
+    AllowedValues: ["True", "False"]
+    Default: "True"
+    Description: Successfully finish the stack after ExtraUserData is successfully executed.
+    Type: String
+  RebootRequiredService:
+    Default: "sshd"
+    Description: Which systemd service to wait for on reboot to finish.
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+
+Mappings:
+  CreateSecurityGroup:
+    "True": {URL: "/private/ThisOrThat_A.yaml"}
+    "False": {URL: "/private/ThisOrThat_B.yaml"}
+
+Outputs:
+  FloatingIpId:
+    Description: Floating IP ID
+    Value:
+      "Fn::GetAtt": [FloatingIp, Outputs.FloatingIpId]
+  SecurityGroupId:
+    Description: Security Group ID
+    Value:
+      "Fn::GetAtt": [SecurityGroupId, Outputs.val]
+  InstanceId:
+    Description: Instance ID
+    Value:
+      Ref: Instance
+  PortId:
+    Description: Port ID
+    Value:
+      "Fn::GetAtt": [PrimaryInterface, Outputs.PortId]
+  FixedIps:
+    Description: Neutron Fixed IPs
+    Value:
+      "Fn::GetAtt": [PrimaryInterface, Outputs.FixedIps]
+
 Resources:
+  SecurityGroupId:
+    Properties:
+      Parameters:
+        a: {"Fn::GetAtt": [SecurityGroup, Outputs.SecurityGroupId]}
+        b: {Ref: PrimarySecurityGroup}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - Fn::FindInMap:
+              - CreateSecurityGroup
+              - {Ref: CreateSecurityGroup}
+              - URL
+    Type: AWS::CloudFormation::Stack
+
+  FloatingIp:
+    Properties:
+      Parameters:
+        NetworkId: {Ref: PrimaryNetworkId}
+        InstanceId: {Ref: Instance}
+        IpAddress: {Ref: FloatingIpAddress}
+        FloatingIpId: {Ref: FloatingIpId}
+        PortId:
+          "Fn::GetAtt": [PrimaryInterface, Outputs.PortId]
+        AssignFloatingIp: {Ref: AssignFloatingIp}
+        Type: {Ref: FloatingIpType}
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: BaseURL}
+          - "/FloatingIp.yaml"
+    Type: AWS::CloudFormation::Stack
+
+  SecurityGroup:
+    Properties:
+      Parameters:
+        Name: {Ref: Name}
+        SimplePorts: {Ref: SecurityGroupSimplePorts}
+        Rules: {Ref: SecurityGroupRules}
+        Type: {Ref: SecurityGroupType}
+        CreateSecurityGroup: {Ref: CreateSecurityGroup}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/SecurityGroup.yaml"
+    Type: AWS::CloudFormation::Stack
+
   PrimaryInterface:
     Properties:
-      name:
-        Fn::Join:
+      Parameters:
+        Name: {Ref: Name}
+        NetworkId: {Ref: PrimaryNetworkId}
+        DefaultSecurityGroups: "False"
+        SecurityGroups:
+        SecurityGroups:
+          Fn::Join:
           - ''
-          - - {Ref: Name}
-            - '-PrimaryPort'
-      network_id: {Ref: PrimaryNetworkId}
-      security_groups: [{Ref: PrimarySecurityGroup}]
-    Type: OS::Neutron::Port
+          - - '["'
+            - {"Fn::GetAtt": [SecurityGroupId, Outputs.val]}
+            - '"]'
+        BaseURL: {Ref: BaseURL}
+      TemplateURL:
+        Fn::Join:
+        - ''
+        - - {Ref: BaseURL}
+          - "/NeutronPort.yaml"
+    Type: AWS::CloudFormation::Stack
+
   Instance:
     Properties:
       name:
@@ -61,10 +208,11 @@ Resources:
       key_name: {Ref: KeyName}
       metadata: {Ref: Metadata}
       networks:
-        - {port: {Ref: PrimaryInterface}}
+        - {port: {"Fn::GetAtt": [PrimaryInterface, Outputs.PortId]}}
       user_data_format: RAW
       user_data: {Ref: UserData}
     Type: OS::Nova::Server
+
   CloudConfig:
     Type: OS::Heat::CloudConfig
     Properties:
@@ -78,10 +226,15 @@ Resources:
         - config:
             Fn::Replace:
               - wc_url: {Ref: WaitHandleInstance}
-                EXTRA_USER_DATA: {Ref: ExtraUserData}
+                NORMAL_EXTRA_USER_DATA: {Ref: ExtraUserData}
+                REBOOT_EXTRA_USER_DATA: {Ref: RebootExtraUserData}
+                AUTO_FINISH: {Ref: AutoFinish}
+                REBOOT_AFTER: {Ref: RebootAfter}
+                REQUIRED_SERVICE: {Ref: RebootRequiredService}
               - |
                 #!/bin/bash
                 ## Error reporting helper function
+                cat > /var/lib/cloud/error_hook <<"EOF"
                 function error_exit
                 {
                   curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
@@ -89,22 +242,86 @@ Resources:
                 }
                 function trap_error
                 {
-                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $2, File: $1"
                 }
-                set -eu
-                trap 'trap_error "$?"' ERR
+                function finished_ok
+                {
+                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+                }
+                function trap_all_errors
+                {
+                 set -eu
+                 trap 'trap_error "$?" "$1"' ERR
+                }
+                EOF
+                . /var/lib/cloud/error_hook
+                trap_all_errors "$0"
+
+                cat > /etc/rc.finishreboot <<"SIMPLE_SERVER_EOF"
+                #!/bin/bash
+                . /var/lib/cloud/error_hook
+                trap_all_errors "$0"
+                chmod -x /etc/rc.finishreboot
+                ## Reboot Extra userdata
+                REBOOT_EXTRA_USER_DATA
+                if [ "AUTO_FINISH" == "True" ]; then
+                 finished_ok
+                fi
+                SIMPLE_SERVER_EOF
+                chmod +x /etc/rc.finishreboot
+
+                which systemctl >> /dev/null
+                if [ $? -eq 0 ]; then
+                 cat > /etc/systemd/system/finishreboot.service <<"EOF"
+                [Unit]
+                Description=Finish up reboot
+                After=REQUIRED_SERVICE.service
+                Requires=REQUIRED_SERVICE.service
+                ConditionFileIsExecutable=/etc/rc.finishreboot
+                [Service]
+                Type=forking
+                RemainAfterExit=yes
+                TimeoutStartSec=0
+                ExecStart=/etc/rc.finishreboot
+                [Install]
+                WantedBy=multi-user.target
+                EOF
+                 systemctl enable finishreboot.service
+                else
+                 echo '[ -x /etc/rc.finishreboot ] && /etc/rc.finishreboot' >> /etc/rc.local
+                fi
 
                 ## Extra userdata
-                EXTRA_USER_DATA
+                NORMAL_EXTRA_USER_DATA
 
-                ## CloudFormation signal that setup is complete
-                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
+                if [ "AUTO_FINISH" == "True" -a "REBOOT_AFTER" == "False" ]; then
+                 finished_ok
+                fi
+
+                #The reboot module in cloud-init isn't always loaded. Fall back this way.
+                if [ "REBOOT_AFTER" == "True" ]; then
+                 (while true; do
+                  ps ax | grep cloud-init | grep -v grep | grep -v tee >> /dev/null || break
+                  sleep 1
+                 done; sleep 2; shutdown -r now)&
+                fi
+        - config:
+            Fn::Replace:
+              - VALUE: {Ref: RebootAfter}
+              - |
+                #cloud-config
+                power_state:
+                  mode: reboot
+                  timeout: 30
+                  condition: VALUE
+
   WaitConditionInstance:
     DependsOn: Instance
     Properties:
       Handle: {Ref: WaitHandleInstance}
       Timeout: {Ref: StartupTimeout}
     Type: AWS::CloudFormation::WaitCondition
+
   WaitHandleInstance:
     Properties: {}
     Type: AWS::CloudFormation::WaitConditionHandle
