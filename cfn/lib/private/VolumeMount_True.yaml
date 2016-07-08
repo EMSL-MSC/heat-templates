@@ -1,0 +1,17 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Create Volume Mount
+Parameters:
+  VolumeId:
+    Description: Id of the volume to attach
+    Type: String
+  InstanceId:
+    Description: Id of the instance to attach to.
+    Type: String
+Resources:
+#Heat needs at least one resource. Create a resource that costs next to nothing.
+  VolumeMount:
+    Properties:
+      Device: /dev/vdb
+      InstanceId: {Ref: InstanceId}
+      VolumeId: {Ref: VolumeId}
+    Type: AWS::EC2::VolumeAttachment

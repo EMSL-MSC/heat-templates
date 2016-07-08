@@ -1,0 +1,33 @@
+HeatTemplateFormatVersion: '2012-12-12'
+Description: Volume Mount
+Parameters:
+  InstanceId:
+    Description: Id of the instance to attach to.
+    Type: String
+  VolumeId:
+    Default: '-1'
+    Description: Id of the volume to attach.
+    Type: String
+  AssignVolume:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to attach a volume
+    Type: String
+  BaseURL:
+    Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
+    Description: Base URL where other templates live.
+    Type: String
+Resources:
+  Interface:
+    Properties:
+      Parameters:
+        VolumeId: {Ref: VolumeId}
+        InstanceId: {Ref: InstanceId}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - /private/VolumeMount_
+            - {Ref: AssignVolume}
+            - .yaml
+    Type: AWS::CloudFormation::Stack

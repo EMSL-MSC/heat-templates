@@ -10,6 +10,7 @@ Outputs:
     Value:
       Ref: Volume
 #FIXME Add feature to use existing cinder volume instead of creating a new one.
+#FIXME it should now be possible to rewrite this to use SimpleServer
 Parameters:
   Name: {Description: Name for the volume, Type: String}
   PrimaryNetworkId: {Description: PrimaryNetworkId, Type: String}
