@@ -93,6 +93,19 @@ Parameters:
     Default: "sshd"
     Description: Which systemd service to wait for on reboot to finish.
     Type: String
+  AssignVolume:
+    AllowedValues: ["True", "False"]
+    Default: "False"
+    Description: Use true to setup a volume
+    Type: String
+  VolumeName:
+    Description: "Name of the volume used when created with Volume-Init"
+    Default: "-1"
+    Type: String
+  MountPoint:
+    Default: "/srv"
+    Description: If a volume is specified, mount here
+    Type: String
   BaseURL:
     Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
@@ -126,6 +139,19 @@ Outputs:
       "Fn::GetAtt": [PrimaryInterface, Outputs.FixedIps]
 
 Resources:
+  VolumeMount:
+    Properties:
+      Parameters:
+        InstanceId: {Ref: Instance}
+        VolumeId: {Ref: VolumeName}
+        AssignVolume: {Ref: AssignVolume}
+      TemplateURL:
+          Fn::Join:
+          - ''
+          - - {Ref: BaseURL}
+            - "/VolumeMount.yaml"
+    Type: AWS::CloudFormation::Stack
+
   SecurityGroupId:
     Properties:
       Parameters:
@@ -231,6 +257,8 @@ Resources:
                 AUTO_FINISH: {Ref: AutoFinish}
                 REBOOT_AFTER: {Ref: RebootAfter}
                 REQUIRED_SERVICE: {Ref: RebootRequiredService}
+                MOUNT_POINT: {Ref: MountPoint}
+                VOLUME_NAME: {Ref: VolumeName}
               - |
                 #!/bin/bash
                 ## Error reporting helper function
@@ -289,6 +317,14 @@ Resources:
                  systemctl enable finishreboot.service
                 else
                  echo '[ -x /etc/rc.finishreboot ] && /etc/rc.finishreboot' >> /etc/rc.local
+                fi
+
+                if [ "xVOLUME_NAME" != "x" -a "xVOLUME_NAME" != "x-1" ]; then
+                 while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
+                 if [ "xMOUNT_POINT" != "x" -a "xMOUNT_POINT" != "x-1" ]; then
+                  echo '/dev/VOLUME_NAME-vg0/VOLUME_NAME-data MOUNT_POINT auto defaults,auto,noatime 0 0' | tee -a /etc/fstab
+                  mount MOUNT_POINT
+                 fi
                 fi
 
                 ## Extra userdata

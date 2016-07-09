@@ -4,6 +4,7 @@ It has the following features:
  * One Server.
  * One Network Card.
  * One Security Group, (Precreated or created from Parameters).
+ * An optional Volume (Create/Init with Volume-Init.yaml)
  * An optional Floating IP.
  * Distro neutral hooks for install time and first reboot.
  * A Wait Condition is provided so that you know exactly what breaks, or when the machine is finished successfully deploying.
@@ -35,10 +36,15 @@ Or by FloatingIpID:
  * FlotingIpType=port_id
  * FloatingIpId=<floating_ip_uuid_here>
 
+For using a Volume:
+ * AssignVolume="True"
+ * VolumeName=<volume_name>
+
 Miscellaneous features:
  * RebootRequiredService - If you want your RebootExtraData script to run after a particular systemd service. For example 'docker'.
  * BaseURL - This template depends on other templates. If you want to mirror the templates, this allows you to point at your own mirror.
  * Metadata - A JSON encoded chunk of Nova metadata. Useful for specifying ServerGroups or other metadata.
+ * MountPoint - Specify a different place to mount the volume, or -1 to skip mounting.
 
 Example environment files:
 
@@ -51,7 +57,7 @@ parameters:
   Image: centos-7
   ExtraUserData: "echo I live > /tmp/hello.txt"
 
-Deploying a docker based webserver, setup an appropriate security group, and attach a floating ip:
+Deploying a docker based webserver, setup an appropriate security group, attach a floating ip, and serve the content out of a volume:
 parameters:
   PrimaryNetworkId: 118a852f-2d35-427d-9226-8a8ff1efea8f
   KeyName: cloud
@@ -62,8 +68,10 @@ parameters:
   FloatingIpAddress: 10.0.0.190
   CreateSecurityGroup: "True"
   SecurityGroupSimplePorts: "22,80,443"
+  AssignVolume="True"
+  VoluemName=WebData
   ExtraUserData: "yum install -y docker; systemctl enable docker"
   RebootAfter: "True"
   RebootRequiredService: docker
-  RebootExtraUserData: "docker run --net=host -d nginx:1.10-alpine"
+  RebootExtraUserData: "docker run --net=host -v /srv:/usr/share/nginx/html:ro -d nginx:1.10-alpine"
 
