@@ -68,7 +68,7 @@ Resources:
                 if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
                     /etc/init.d/sshd start
                 fi
-                ntpdate ntp.ubuntu.com
+                ntpdate ntp.ubuntu.com || true
                 if [ "@TYPE@" = "postgresql" ]; then
                     yum install -y postgresql-server
                     mkdir /srv/postgresql
