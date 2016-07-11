@@ -38,6 +38,7 @@ Or by FloatingIpID:
 
 For using a Volume:
  * AssignVolume="True"
+ * VolumeId=<volume_id>
  * VolumeName=<volume_name>
 
 Miscellaneous features:

@@ -98,6 +98,10 @@ Parameters:
     Default: "False"
     Description: Use true to setup a volume
     Type: String
+  VolumeId:
+    Description: "The Volume ID to attach"
+    Default: "-1"
+    Type: String
   VolumeName:
     Description: "Name of the volume used when created with Volume-Init"
     Default: "-1"
@@ -143,7 +147,7 @@ Resources:
     Properties:
       Parameters:
         InstanceId: {Ref: Instance}
-        VolumeId: {Ref: VolumeName}
+        VolumeId: {Ref: VolumeId}
         AssignVolume: {Ref: AssignVolume}
       TemplateURL:
           Fn::Join:
