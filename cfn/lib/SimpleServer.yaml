@@ -283,7 +283,8 @@ Resources:
                 function trap_all_errors
                 {
                  set -eu
-                 trap 'trap_error "$?" "$1"' ERR
+                 MYSCRIPT="$1"
+                 trap 'trap_error "$?" "$MYSCRIPT"' ERR
                 }
                 EOF
                 . /var/lib/cloud/error_hook
