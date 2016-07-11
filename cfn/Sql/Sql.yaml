@@ -21,7 +21,7 @@ Parameters:
     Description: Flavor to boot
     Type: String
   Image:
-    Default: centos-6.5
+    Default: centos-7
     Description: Image of choice
     Type: String
   StartupTimeout: 
@@ -29,7 +29,10 @@ Parameters:
     Description: How long to wait on node coming up
     Type: Number
   VolumeId:
-    Description: Volume where data lives
+    Description: Volume Id
+    Type: String
+  VolumeName:
+    Description: Volume Name
     Type: String
   AssignFloatingIp:
     AllowedValues: ["True", "False"]
@@ -37,148 +40,91 @@ Parameters:
     Description: Use true to setup a floating ip
     Type: String
   FloatingIpAddress:
-    Default: ""
+    Default: "-1"
     Description: The floating ip address you would like to attach
+    Type: String
+  FloatingIpId:
+    Default: '-1'
+    Description: The floating ip id
+    Type: String
+  FloatingIpType:
+    AllowedValues: ["instance_ip", "port_id"]
+    Default: "instance_ip"
+    Description: How to configure. instance_ip or port_id.
     Type: String
   BaseURL:
     Default: 'https://raw.githubusercontent.com/EMSL-MSC/heat-templates/master/cfn/lib'
     Description: Base URL where other templates live.
     Type: String
+  ExtraUserData:
+    Default: ''
+    Description: Extra User Data
+    Type: String
 Resources:
-  SecurityGroup:
-    Type: OS::Neutron::SecurityGroup
-    Properties:
-      name:
-        Fn::Join:
-        - ''
-        - - {Ref: 'AWS::StackName'}
-          - '-SecurityGroup'
-      description: Database Security Group
-      rules:
-      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
-      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 3306, protocol: tcp, port_range_max: 3306}
-      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 5432, protocol: tcp, port_range_max: 5432}
-  Floating-Ip:
+  Instance:
     Properties:
       Parameters:
+        Name: {Ref: Name}
+        PrimaryNetworkId: {Ref: PrimaryNetworkId}
+        Image: {Ref: Image}
+        Flavor: {Ref: Flavor}
+        InstanceZone: {Ref: InstanceZone}
+        CreateSecurityGroup: "True"
+        SecurityGroupSimplePorts: "22,3306,5432"
+        AssignVolume: "True"
+        VolumeId: {Ref: VolumeId}
+        VolumeName: {Ref: VolumeName}
         AssignFloatingIp: {Ref: AssignFloatingIp}
-        InstanceId: {Ref: Instance}
-        NetworkId: {Ref: PrimaryNetworkId}
-        IpAddress: {Ref: FloatingIpAddress}
+        FloatingIpId: {Ref: FloatingIpId}
+        FloatingIpType: {Ref: FloatingIpType}
+        FloatingIpAddress: {Ref: FloatingIpAddress}
         BaseURL: {Ref: BaseURL}
+        ExtraUserData:
+          Fn::Replace:
+            - "@DNSNAME@": {Ref: DNSName}
+              "@NAME@": {Ref: Name}
+              "@EXTRAUSERDATA@": {Ref: ExtraUserData}
+            - |
+
+              hostname @DNSNAME@
+              sed -i 's/HOSTNAME=.*/HOSTNAME='@DNSNAME@'/' /etc/sysconfig/network
+              hostnamectl set-hostname --static @DNSNAME@ || true
+
+              ntpdate ntp.ubuntu.com || true
+              systemctl enable ntpdate || chkconfig ntpdate on || true
+              systemctl start ntpdate || service ntpdate start || true
+              sed -i 's/SELINUX=.*/SELINUX=permissive/' /etc/sysconfig/selinux || true
+              setenforce Permissive || true
+
+              if [ -d /srv/postgresql ]; then
+                  yum install -y postgresql postgresql-server
+
+                  mv /var/lib/pgsql /var/lib/pgsql.old
+                  ln -s /srv/postgresql/lib /var/lib/pgsql
+              fi
+
+              if [ -d /srv/mysql ]; then
+                  yum install -y mysql mariadb-galera-server
+
+                  mv /var/lib/mysql /var/lib/mysql.old
+                  ln -s /srv/mysql/lib /var/lib/mysql
+              fi
+
+              ## Extra userdata
+              @EXTRAUSERDATA@
+
+              if [ -d /srv/postgresql ]; then
+                  systemctl enable postgresql || chkconfig postgresql on
+                  systemctl start postgresql || service start postgresql
+              fi
+
+              if [ -d /srv/mysql ]; then
+                  systemctl enable mysqld || shkconfig mysqld on
+                  systemctl start mysqld || service start mysqld
+              fi
       TemplateURL:
           Fn::Join:
           - ''
           - - {Ref: BaseURL}
-            - "/FloatingIp.yaml"
+            - "/SimpleServer.yaml"
     Type: AWS::CloudFormation::Stack
-  PrimaryInterface:
-    Properties:
-      name:
-        Fn::Join:
-          - ''
-          - - {Ref: 'AWS::StackName'}
-            - '-PrimaryPort'
-      network_id: {Ref: PrimaryNetworkId}
-      security_groups: [{Ref: SecurityGroup}]
-    Type: OS::Neutron::Port
-  Instance:
-    Properties:
-      name:
-        Fn::Join:
-          - ''
-          - - {Ref: 'AWS::StackName'}
-      availability_zone: {Ref: InstanceZone}
-      image: {Ref: Image}
-      flavor: {Ref: Flavor}
-      key_name: {Ref: KeyName}
-      networks:
-        - {port: {Ref: PrimaryInterface}}
-      user_data_format: RAW
-      user_data: {Ref: UserData}
-    Type: OS::Nova::Server
-  CloudConfig:
-    Type: OS::Heat::CloudConfig
-    Properties:
-      cloud_config:
-
-  UserData:
-    Type: OS::Heat::MultipartMime
-    Properties:
-      parts:
-        - config: {Ref: CloudConfig}
-        - config:
-            Fn::Replace:
-              - wc_url: {Ref: WaitHandleInstance}
-                "@DNSNAME@": {Ref: DNSName}
-                "@NAME@": {Ref: Name}
-                "@EXTRAUSERDATA": {Ref: ExtraUserData}
-              - |
-                #!/bin/bash
-                yum update -y aws-cfn-bootstrap
-                ## Error reporting helper function
-                function error_exit
-                {
-                  curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "FAILURE", "Reason": "'"$1"'", "Data": "Application has completed configuration.", "UniqueId": "0000"}' "wc_url"
-                  exit 1
-                }
-                function trap_error
-                {
-                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1"
-                }
-                set -eu
-                trap 'trap_error "$?"' ERR
-
-                while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
-                echo '/dev/@NAME@-vg0/@NAME@-data /srv ext4 defaults,auto,noatime 0 0' | tee -a /etc/fstab
-                mount /srv
-
-                hostname @DNSNAME@
-                sed -i 's/HOSTNAME=.*/HOSTNAME='@DNSNAME@'/' /etc/sysconfig/network
-
-                ntpdate ntp.ubuntu.com
-                chkconfig ntpdate on
-                service ntpdate start
-
-                if [ -d /srv/postgresq ]; then
-                    yum install -y postgresql postgresql-server
-
-                    mv /var/lib/pgsql /var/lib/pgsql.old
-                    ln -s /srv/postgresql/lib /var/lib/pgsql
-                fi
-
-                if [ -d /srv/mysql ]; then
-                    yum install -y mysql mariadb-galera-server
-
-                    mv /var/lib/mysql /var/lib/mysql.old
-                    ln -s /srv/mysql/lib /var/lib/mysql
-                fi
-
-                ## Extra userdata
-                @EXTRAUSERDATA@
-
-                if [ -d /srv/postgresq ]; then
-                    chkconfig postgresql on
-                fi
-
-                if [ -d /srv/mysql ]; then
-                    service postgresql start
-                fi
-       
-                ## CloudFormation signal that setup is complete
-                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "wc_url"
-  VolumeMount:
-    Properties:
-      Device: /dev/vdb
-      InstanceId: {Ref: Instance}
-      VolumeId: {Ref: VolumeId}
-    Type: AWS::EC2::VolumeAttachment
-  WaitConditionInstance:
-    DependsOn: Instance
-    Properties:
-      Handle: {Ref: WaitHandleInstance}
-      Timeout: {Ref: StartupTimeout}
-    Type: AWS::CloudFormation::WaitCondition
-  WaitHandleInstance:
-    Properties: {}
-    Type: AWS::CloudFormation::WaitConditionHandle
