@@ -274,7 +274,7 @@ Resources:
                 }
                 function trap_error
                 {
-                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $2, File: $1"
+                  error_exit "Line: ${BASH_LINENO[0]}, ExitCode: $1, File: $2"
                 }
                 function finished_ok
                 {
