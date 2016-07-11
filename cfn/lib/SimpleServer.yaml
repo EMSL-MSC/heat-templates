@@ -326,6 +326,8 @@ Resources:
                 if [ "xVOLUME_NAME" != "x" -a "xVOLUME_NAME" != "x-1" ]; then
                  while [ ! -e /dev/vdb ]; do echo waiting for /dev/vdb to attach; sleep 10; done
                  if [ "xMOUNT_POINT" != "x" -a "xMOUNT_POINT" != "x-1" ]; then
+                  which vgchange || yum install -y lvm2 || apt-get install lvm2 || true
+                  vgchange -a y VOLUME_NAME-vg0
                   echo '/dev/VOLUME_NAME-vg0/VOLUME_NAME-data MOUNT_POINT auto defaults,auto,noatime 0 0' | tee -a /etc/fstab
                   mount MOUNT_POINT
                  fi
