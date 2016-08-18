@@ -79,9 +79,9 @@ Resources:
                     yum install -y mariadb-galera-server
                     mkdir /srv/mysql
                     chown mysql.mysql /srv/mysql
-                    service mysqld start
+                    service mariadb start
                     sleep 10
-                    service mysqld stop
+                    service mariadb stop
                     mv /var/lib/mysql /srv/mysql/lib
                 fi
       TemplateURL:
