@@ -120,8 +120,8 @@ Resources:
               fi
 
               if [ -d /srv/mysql ]; then
-                  systemctl enable mysqld || shkconfig mysqld on
-                  systemctl start mysqld || service start mysqld
+                  systemctl enable mariadb || chkconfig mysqld on
+                  systemctl start mariadb || service start mysqld
               fi
       TemplateURL:
           Fn::Join:
