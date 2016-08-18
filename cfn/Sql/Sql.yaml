@@ -78,6 +78,7 @@ Resources:
         FloatingIpId: {Ref: FloatingIpId}
         FloatingIpType: {Ref: FloatingIpType}
         FloatingIpAddress: {Ref: FloatingIpAddress}
+        KeyName: {Ref: KeyName}
         BaseURL: {Ref: BaseURL}
         ExtraUserData:
           Fn::Replace:
